@@ -361,27 +361,15 @@
     </div>
   </section>
 
-  <!-- TAB 6: EXECUTIVE PRESENTATION NOTES & AUDIT -->
+  <!-- TAB 6: PRESENTATION NOTES & AUTO-AUDIT -->
   <section id="tab6" class="tab-panel">
-    <div class="grid-2">
-      <div class="card">
-        <div class="card-hdr">
-          <h2>ข้อมูลซ่อมแซมวันระบบบันทึกขาดหายในลาน 2</h2>
-          <button class="btn-png" onclick="downloadChartPNG('cOutageComp','14_ตรวจสอบวันระบบบันทึกขาดหาย')">📷 บันทึกรูป PNG</button>
-        </div>
-        <div class="desc">เลือกดูวันที่: <select id="outageDaySel" onchange="renderOutageChart()">
-          <option value="2026-01-21">2026-01-21 (เติมส่วนขาด +3,199 คัน)</option>
-          <option value="2026-05-24">2026-05-24 (เติมส่วนขาด +2,151 คัน)</option>
-          <option value="2026-06-03">2026-06-03 (เติมส่วนขาด +2,044 คัน)</option>
-        </select></div>
-        <div class="chart-wrap"><canvas id="cOutageComp"></canvas></div>
-      </div>
+    <div class="grid-1">
       <div class="card">
         <div class="card-hdr">
           <h2>สรุปประเด็นสำคัญและข้อเสนอแนะ (อัปเดตอัตโนมัติตามข้อมูลล่าสุด)</h2>
         </div>
         <div class="desc">ระบบตรวจจับและสะสมประเด็นสำคัญอัตโนมัติทุกครั้งที่มีการนำเข้าข้อมูลใหม่</div>
-        <div class="table-scroll" style="max-height:360px" id="dynamicAuditTable"></div>
+        <div class="table-scroll" style="max-height:560px" id="dynamicAuditTable"></div>
       </div>
     </div>
   </section>
@@ -498,7 +486,6 @@ function renderAll() {
   renderTab3(f);
   renderTab4(f);
   renderTab5(f);
-  renderOutageChart();
   renderDynamicAudit(f);
 }
 
@@ -874,23 +861,6 @@ function renderTab5(f) {
   destroyChart('cS15Monthly');
   charts['cS15Monthly'] = new Chart(document.getElementById('cS15Monthly'), {
     type: 'line', data: { labels: months, datasets: ds5 },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-  });
-}
-
-function renderOutageChart() {
-  const day = document.getElementById('outageDaySel').value;
-  const sub = DATA.outage_patch.filter(r => r['วันที่'] === day).sort((a,b) => a.hour - b.hour);
-  destroyChart('cOutageComp');
-  charts['cOutageComp'] = new Chart(document.getElementById('cOutageComp'), {
-    type: 'bar',
-    data: {
-      labels: sub.map(r => String(r.hour).padStart(2,'0')+':00'),
-      datasets: [
-        { label: 'ยอดจากไฟล์ดิบ (.xls)', data: sub.map(r => r['ยอดจากไฟล์ดิบ_XLS']), backgroundColor: '#94a3b8' },
-        { label: 'ยอดจริงหลังซ่อม (รายชั่วโมง)', data: sub.map(r => r['ยอดจากไฟล์แนบ_Hourly']), backgroundColor: '#16a34a' }
-      ]
-    },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
   });
 }
