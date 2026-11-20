@@ -3,9 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>รายงานวิเคราะห์ข้อมูลลานจอดรถ 2026 — Dynamic Dashboard</title>
+<title>รายงานและวิเคราะห์ข้อมูลลานจอดรถ 2026</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -30,37 +29,36 @@
   header {
     background: linear-gradient(135deg, #0f294a 0%, #1e4b7a 100%);
     color: #fff;
-    padding: 18px 28px;
+    padding: 16px 28px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.12);
   }
   .header-top {
     display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;
   }
-  header h1 { font-size: 1.35rem; font-weight: 700; }
-  header .subtitle { font-size: 0.85rem; color: #cbd5e1; margin-top: 2px; }
+  header h1 { font-size: 1.32rem; font-weight: 700; }
   .controls-bar {
     background: #fff;
     border-bottom: 1px solid var(--border);
     padding: 12px 28px;
-    display: flex; flex-wrap: wrap; align-items: center; gap: 16px;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 14px;
     position: sticky; top: 0; z-index: 50;
     box-shadow: 0 1px 4px rgba(0,0,0,0.05);
   }
-  .ctrl-group { display: flex; align-items: center; gap: 6px; font-size: 0.88rem; }
+  .ctrl-group { display: flex; align-items: center; gap: 6px; font-size: 0.86rem; }
   .ctrl-group label { font-weight: 600; color: var(--primary); white-space: nowrap; }
-  select, input[type="number"] {
-    padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px;
-    font-family: inherit; font-size: 0.88rem; background: #fff; color: var(--text);
+  select, input[type="number"], input[type="date"] {
+    padding: 5px 9px; border: 1px solid #cbd5e1; border-radius: 6px;
+    font-family: inherit; font-size: 0.85rem; background: #fff; color: var(--text);
   }
-  input[type="number"] { width: 76px; font-weight: 600; text-align: center; background: #fffbeb; border-color: #f59e0b; }
-  .toggle-pill {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: #ecfdf5; border: 1px solid #86efac; color: #166534;
-    padding: 5px 12px; border-radius: 999px; font-size: 0.84rem; font-weight: 600; cursor: pointer;
+  input[type="number"] { width: 72px; font-weight: 600; text-align: center; background: #fffbeb; border-color: #f59e0b; }
+  .preset-bar { display: flex; gap: 4px; }
+  .preset-btn {
+    padding: 4px 9px; border: 1px solid #cbd5e1; background: #f8fafc; color: var(--primary);
+    border-radius: 999px; font-family: inherit; font-size: 0.78rem; font-weight: 600; cursor: pointer;
   }
-  .toggle-pill input { accent-color: #16a34a; width: 15px; height: 15px; }
+  .preset-btn:hover, .preset-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
   .tabs {
-    display: flex; flex-wrap: wrap; gap: 6px; padding: 14px 28px 0;
+    display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 28px 0;
     border-bottom: 2px solid var(--border); background: #fff;
   }
   .tab-btn {
@@ -95,35 +93,43 @@
     background: var(--card); border-radius: 10px; padding: 18px 20px;
     border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   }
-  .card h2 { font-size: 1.02rem; color: var(--primary); margin-bottom: 4px; font-weight: 700; }
-  .card .desc { font-size: 0.82rem; color: var(--muted); margin-bottom: 14px; }
+  .card-hdr { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 4px; }
+  .card h2 { font-size: 1.02rem; color: var(--primary); font-weight: 700; }
+  .card .desc { font-size: 0.82rem; color: var(--muted); margin-bottom: 12px; }
+  .btn-png {
+    padding: 4px 10px; border-radius: 6px; border: 1px solid #cbd5e1;
+    background: #f8fafc; color: var(--primary); font-family: inherit;
+    font-size: 0.76rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+  }
+  .btn-png:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
   .chart-wrap { position: relative; height: 340px; width: 100%; }
   .chart-wrap.tall { height: 390px; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.84rem; margin-top: 8px; }
-  th, td { padding: 8px 10px; border: 1px solid var(--border); text-align: right; }
-  th { background: var(--primary); color: #fff; font-weight: 600; text-align: center; }
-  td:first-child, td:nth-child(2) { text-align: left; }
-  tr:nth-child(even) { background: #f8fafc; }
-  .neg { background: #fee2e2 !important; color: #991b1b; font-weight: 700; }
-  .pos { color: #166534; }
+  .table-scroll { overflow: auto; max-height: 460px; border: 1px solid var(--border); border-radius: 6px; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.84rem; }
+  th, td { padding: 8px 10px; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); text-align: right; }
+  thead th {
+    position: sticky; top: 0; z-index: 3;
+    background: var(--primary); color: #fff; font-weight: 600; text-align: center;
+  }
+  td:first-child, td:nth-child(2), td:nth-child(3) { text-align: left; }
+  tbody tr:nth-child(even) { background: #f8fafc; }
+  tbody tr:hover { background: #eff6ff; }
+  .table-filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 10px; font-size: 0.84rem; }
+  .info-tip {
+    background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px;
+    padding: 10px 14px; font-size: 0.82rem; color: #0c4a6e; margin-top: 10px; line-height: 1.6;
+  }
   .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.76rem; font-weight: 600; }
   .badge-warn { background: #fef3c7; color: #92400e; }
   .badge-danger { background: #fee2e2; color: #991b1b; }
   .badge-ok { background: #dcfce7; color: #166534; }
-  .drop-zone {
-    border: 2px dashed #3b82f6; background: #eff6ff; border-radius: 12px;
-    padding: 28px; text-align: center; cursor: pointer; transition: all .2s;
-  }
-  .drop-zone:hover, .drop-zone.dragover { background: #dbeafe; border-color: #1d4ed8; }
   .btn {
-    display: inline-block; padding: 8px 16px; border-radius: 6px; border: none;
-    background: var(--primary); color: #fff; font-family: inherit; font-size: 0.88rem;
-    font-weight: 600; cursor: pointer; margin-top: 10px;
+    display: inline-block; padding: 7px 14px; border-radius: 6px; border: none;
+    background: var(--primary); color: #fff; font-family: inherit; font-size: 0.85rem;
+    font-weight: 600; cursor: pointer; text-decoration: none;
   }
-  .btn:hover { background: var(--primary-light); }
-  .btn-outline { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
-  .table-scroll { overflow-x: auto; max-height: 440px; }
-  #importLog { margin-top: 12px; font-size: 0.84rem; text-align: left; white-space: pre-wrap; background: #0f172a; color: #e2e8f0; padding: 12px; border-radius: 8px; display: none; max-height: 200px; overflow-y: auto; }
+  .btn-outline { background: rgba(255,255,255,0.14); color: #fff; border: 1px solid rgba(255,255,255,0.4); }
+  .btn-outline:hover { background: rgba(255,255,255,0.24); }
   @media (max-width: 680px) { .grid-2 { grid-template-columns: 1fr; } .controls-bar, main, header { padding-left: 14px; padding-right: 14px; } }
 </style>
 </head>
@@ -132,33 +138,44 @@
 <header>
   <div class="header-top">
     <div>
-      <h1>📊 ระบบรายงานและวิเคราะห์ข้อมูลลานจอดรถ 2026 (Interactive Dashboard)</h1>
-      <div class="subtitle" id="metaSubtitle">กำลังโหลดข้อมูล...</div>
+      <h1>📊 ระบบรายงานและวิเคราะห์ข้อมูลลานจอดรถ 2026</h1>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <a href="./admin.html" class="btn btn-outline" style="background:rgba(255,255,255,0.18);color:#fff;border-color:rgba(255,255,255,0.45);margin-top:0;text-decoration:none">🛠️ หน้าแอดมินนำเข้าไฟล์รายวัน</a>
-      <button class="btn btn-outline" style="background:rgba(255,255,255,0.12);color:#fff;border-color:rgba(255,255,255,0.35);margin-top:0" onclick="exportCurrentCSV()">⬇️ Export CSV ตารางสรุป</button>
+      <a href="./admin.html" class="btn btn-outline">🛠️ หน้าแอดมินนำเข้าไฟล์รายวัน</a>
+      <button class="btn btn-outline" onclick="exportCurrentCSV()">⬇️ Export CSV</button>
     </div>
   </div>
 </header>
 
 <div class="controls-bar">
   <div class="ctrl-group">
-    <label for="monthFilter">เดือน:</label>
-    <select id="monthFilter" onchange="renderAll()"></select>
+    <label for="dateFrom">ช่วงวันที่:</label>
+    <input type="date" id="dateFrom" onchange="onDateChange()" />
+    <span>ถึง</span>
+    <input type="date" id="dateTo" onchange="onDateChange()" />
+  </div>
+  <div class="preset-bar">
+    <button class="preset-btn active" id="preAll" onclick="setPreset('ALL', this)">ทั้งหมด</button>
+    <button class="preset-btn" id="preMonth" onclick="setPreset('LAST_MONTH', this)">เดือนล่าสุด</button>
+    <button class="preset-btn" id="pre30" onclick="setPreset('30D', this)">30 วันล่าสุด</button>
+    <button class="preset-btn" id="pre7" onclick="setPreset('7D', this)">7 วันล่าสุด</button>
   </div>
   <div class="ctrl-group">
     <label for="lotFilter">ลานจอดรถ:</label>
     <select id="lotFilter" onchange="renderAll()">
       <option value="ALL">ทุกลานจอดรถ (รวม)</option>
-      <option value="ลาน 2">ลาน 2 (รวมป้อมหลัก + ป้อมทางออกพิเศษ)</option>
+      <option value="ลาน 2">ลาน 2 (รวมป้อมพิเศษ)</option>
       <option value="ลาน 3">ลาน 3</option>
     </select>
   </div>
-  <label class="toggle-pill" title="เติมยอดรถเข้าที่ขาดหายในลาน 2 วันที่ 21 ม.ค., 24 พ.ค. และ 3 มิ.ย. รวม +7,394 คัน">
-    <input type="checkbox" id="patchToggle" checked onchange="renderAll()" />
-    รวมข้อมูลซ่อมวันระบบล่ม 3 วัน (+7,394 คัน)
-  </label>
+  <div class="ctrl-group">
+    <label for="typeFilter">ประเภทรถ:</label>
+    <select id="typeFilter" onchange="renderAll()">
+      <option value="ALL">ทุกประเภท (รายวัน+รายเดือน)</option>
+      <option value="รายวัน">รถรายวัน (มีขีดกลาง)</option>
+      <option value="รายเดือน">รถรายเดือน (ไม่มีขีดกลาง)</option>
+    </select>
+  </div>
   <div class="ctrl-group" style="margin-left:auto">
     <label>ความจุ ลาน 2:</label>
     <input type="number" id="capL2" value="346" min="1" onchange="renderAll()" />
@@ -174,7 +191,7 @@
   <button class="tab-btn" onclick="switchTab('tab3', this)">3. รถเข้ารายชั่วโมง</button>
   <button class="tab-btn" onclick="switchTab('tab4', this)">4. ช่องว่าง & ค้างเที่ยงคืน</button>
   <button class="tab-btn" onclick="switchTab('tab5', this)">5. รถจอด 0–15 นาที</button>
-  <button class="tab-btn" onclick="switchTab('tab6', this)">🔍 ตรวจสอบข้อมูล & นำเข้าไฟล์ใหม่</button>
+  <button class="tab-btn" onclick="switchTab('tab6', this)">📋 หมายเหตุ & ประเด็นสำคัญ</button>
 </div>
 
 <main>
@@ -183,20 +200,29 @@
     <div class="kpi-grid" id="kpiGrid"></div>
     <div class="grid-2">
       <div class="card">
-        <h2>แนวโน้มจำนวนรถยนต์เข้าเฉลี่ยต่อวัน รายเดือน</h2>
-        <div class="desc">เปรียบเทียบยอดจากไฟล์ดิบ (.xls) กับยอดหลังเติมวันระบบล่ม 3 วัน และยอดปกติ (ตัดวิกฤต 26–30 ก.ย.)</div>
+        <div class="card-hdr">
+          <h2>แนวโน้มจำนวนรถยนต์เข้าเฉลี่ยต่อวัน รายเดือน</h2>
+          <button class="btn-png" onclick="downloadChartPNG('cMonthlyAvg','01_แนวโน้มรถเข้าเฉลี่ยต่อวัน')">📷 บันทึกรูป PNG</button>
+        </div>
+        <div class="desc">เปรียบเทียบยอดเฉลี่ยต่อวันจริง กับยอดปกติ (ตัดช่วงวิกฤต 26–30 ก.ย.)</div>
         <div class="chart-wrap"><canvas id="cMonthlyAvg"></canvas></div>
       </div>
       <div class="card">
-        <h2>จำนวนรถเข้ารายเดือน แยกรถรายวัน vs รถรายเดือน</h2>
+        <div class="card-hdr">
+          <h2>จำนวนรถเข้ารายเดือน แยกรถรายวัน vs รถรายเดือน</h2>
+          <button class="btn-png" onclick="downloadChartPNG('cMonthlyType','02_รถเข้ารายเดือน_รายวันvsรายเดือน')">📷 บันทึกรูป PNG</button>
+        </div>
         <div class="desc">เกณฑ์จำแนก: ทะเบียนมีขีดกลาง (-) = รายวัน | ไม่มีขีดกลาง = รายเดือน</div>
         <div class="chart-wrap"><canvas id="cMonthlyType"></canvas></div>
       </div>
     </div>
     <div class="grid-1">
       <div class="card">
-        <h2>กราฟยอดรถยนต์เข้ารายวัน (Daily Traffic Trend)</h2>
-        <div class="desc">ชี้ที่จุดข้อมูลเพื่อดูรายละเอียดแต่ละวัน (แสดงตามตัวกรองเดือนและลานจอดรถด้านบน)</div>
+        <div class="card-hdr">
+          <h2>กราฟยอดรถยนต์เข้ารายวันตามช่วงวันที่เลือก</h2>
+          <button class="btn-png" onclick="downloadChartPNG('cDailyLine','03_ยอดรถเข้ารายวัน')">📷 บันทึกรูป PNG</button>
+        </div>
+        <div class="desc">แสดงข้อมูลรายวันตามช่วงวันที่ ลานจอดรถ และประเภทรถที่เลือกด้านบน</div>
         <div class="chart-wrap tall"><canvas id="cDailyLine"></canvas></div>
       </div>
     </div>
@@ -206,18 +232,47 @@
   <section id="tab2" class="tab-panel">
     <div class="grid-2">
       <div class="card">
-        <h2>การกระจายตัวระยะเวลาจอดรถ (8 ช่วงเวลา)</h2>
+        <div class="card-hdr">
+          <h2>การกระจายตัวระยะเวลาจอดรถ (8 ช่วงเวลา)</h2>
+          <button class="btn-png" onclick="downloadChartPNG('cDurBuckets','04_สัดส่วนช่วงเวลาจอดรถ')">📷 บันทึกรูป PNG</button>
+        </div>
         <div class="desc">เปรียบเทียบสัดส่วนช่วงเวลาจอดของรถรายวัน vs รถรายเดือน</div>
         <div class="chart-wrap"><canvas id="cDurBuckets"></canvas></div>
       </div>
       <div class="card">
-        <h2>เวลาจอดเฉลี่ย & มัธยฐาน (นาที) แยกลานและประเภทรถ</h2>
-        <div class="desc">หน่วย: นาที (คำนวณจากข้อมูลจริงที่มีเวลาเข้า-ออกสมบูรณ์)</div>
+        <div class="card-hdr">
+          <h2>เวลาจอดเฉลี่ย & มัธยฐาน (นาที) แยกลานและประเภทรถ</h2>
+          <button class="btn-png" onclick="downloadChartPNG('cDurAvg','05_เวลาจอดเฉลี่ยและมัธยฐาน')">📷 บันทึกรูป PNG</button>
+        </div>
+        <div class="desc">เปรียบเทียบพฤติกรรมการจอดของลูกค้าแต่ละกลุ่มในแต่ละลานจอดรถ</div>
         <div class="chart-wrap"><canvas id="cDurAvg"></canvas></div>
+        <div class="info-tip">
+          <strong>วิธีอ่านกราฟเพื่อใช้นำเสนอ:</strong>
+          <strong>ค่าเฉลี่ย (Mean)</strong> คือเวลาจอดรวมหารจำนวนคัน (อาจสูงขึ้นหากมีรถจอดค้างคืน) |
+          <strong>มัธยฐาน (Median)</strong> คือเวลาจอดของลูกค้าส่วนใหญ่ 50% แรก (สะท้อนพฤติกรรมลูกค้าทั่วไปได้แม่นกว่า เช่น ลาน 2 รายวัน มัธยฐาน ~40 นาที แปลว่าลูกค้าครึ่งหนึ่งซื้อของเสร็จใน 40 นาที) |
+          <strong>P90</strong> คือ <em>รถ 90% ทั้งหมดจอดไม่เกินเวลานี้</em> (ใช้กำหนดอัตราค่าจอดและวางแผนรอบหมุนเวียนช่องจอด)
+        </div>
       </div>
     </div>
     <div class="card">
-      <h2>ตารางสรุปเวลาจอดรถ แยกเดือน ลานจอดรถ และประเภทรถ</h2>
+      <div class="card-hdr">
+        <h2>ตารางสรุปเวลาจอดรถ แยกเดือน ลานจอดรถ และประเภทรถ</h2>
+        <button class="btn-png" onclick="exportDurationCSV()">⬇️ Export CSV ตารางนี้</button>
+      </div>
+      <div class="table-filters">
+        <label><strong>กรองเฉพาะตาราง:</strong></label>
+        <select id="tDurMonth" onchange="renderDurationTable()"></select>
+        <select id="tDurLot" onchange="renderDurationTable()">
+          <option value="ALL">ทุกลานจอดรถ</option>
+          <option value="ลาน 2">ลาน 2</option>
+          <option value="ลาน 3">ลาน 3</option>
+        </select>
+        <select id="tDurType" onchange="renderDurationTable()">
+          <option value="ALL">ทุกประเภทรถ</option>
+          <option value="รายวัน">รถรายวัน</option>
+          <option value="รายเดือน">รถรายเดือน</option>
+        </select>
+      </div>
       <div class="table-scroll" id="tDurTable"></div>
     </div>
   </section>
@@ -226,12 +281,18 @@
   <section id="tab3" class="tab-panel">
     <div class="grid-2">
       <div class="card">
-        <h2>จำนวนรถยนต์เข้าเฉลี่ยต่อวัน แยกรายชั่วโมง (00:00–23:00)</h2>
-        <div class="desc">เปรียบเทียบ ลาน 2, ลาน 3 และป้อมทางออกพิเศษ (เฉลี่ยเฉพาะวันที่เปิด)</div>
+        <div class="card-hdr">
+          <h2>จำนวนรถยนต์เข้าเฉลี่ยต่อวัน แยกรายชั่วโมง (00:00–23:00)</h2>
+          <button class="btn-png" onclick="downloadChartPNG('cHrEntries','06_รถเข้ารายชั่วโมง_แยกลาน')">📷 บันทึกรูป PNG</button>
+        </div>
+        <div class="desc">เปรียบเทียบ ลาน 2 (รวมป้อมพิเศษ) และ ลาน 3</div>
         <div class="chart-wrap"><canvas id="cHrEntries"></canvas></div>
       </div>
       <div class="card">
-        <h2>จำนวนรถเข้าเฉลี่ยรายชั่วโมง แยกรายวัน vs รายเดือน</h2>
+        <div class="card-hdr">
+          <h2>จำนวนรถเข้าเฉลี่ยรายชั่วโมง แยกรายวัน vs รายเดือน</h2>
+          <button class="btn-png" onclick="downloadChartPNG('cHrType','07_รถเข้ารายชั่วโมง_แยกประเภท')">📷 บันทึกรูป PNG</button>
+        </div>
         <div class="desc">สังเกตช่วงเช้ามืด 01:00–05:00 น. ที่รถรายเดือนเข้าหนาแน่น</div>
         <div class="chart-wrap"><canvas id="cHrType"></canvas></div>
       </div>
@@ -242,25 +303,37 @@
   <section id="tab4" class="tab-panel">
     <div class="grid-2">
       <div class="card">
-        <h2>รถจอดสะสมรายชั่วโมง vs ความจุจริง — ลาน 2 (รวมป้อมพิเศษ)</h2>
-        <div class="desc">เส้นสีดำ = ความจุเต็มลาน (ปรับตัวเลขความจุด้านบนได้ทันที)</div>
+        <div class="card-hdr">
+          <h2>รถจอดสะสมรายชั่วโมง vs ความจุจริง — ลาน 2</h2>
+          <button class="btn-png" onclick="downloadChartPNG('cOccL2','08_รถจอดสะสม_ลาน2')">📷 บันทึกรูป PNG</button>
+        </div>
+        <div class="desc">เส้นสีดำ = ความจุเต็มลาน 346 คัน (ปรับตัวเลขความจุด้านบนได้ทันที)</div>
         <div class="chart-wrap"><canvas id="cOccL2"></canvas></div>
       </div>
       <div class="card">
-        <h2>รถจอดสะสมรายชั่วโมง vs ความจุจริง — ลาน 3</h2>
+        <div class="card-hdr">
+          <h2>รถจอดสะสมรายชั่วโมง vs ความจุจริง — ลาน 3</h2>
+          <button class="btn-png" onclick="downloadChartPNG('cOccL3','09_รถจอดสะสม_ลาน3')">📷 บันทึกรูป PNG</button>
+        </div>
         <div class="desc">ช่วง 08:00–14:00 น. รถจอดสะสมเฉลี่ยเกินความจุ 82 คันเกือบทุกวัน</div>
         <div class="chart-wrap"><canvas id="cOccL3"></canvas></div>
       </div>
     </div>
     <div class="grid-2">
       <div class="card">
-        <h2>จำนวนช่องว่างคงเหลือเฉลี่ยรายชั่วโมง (สีแดง = เต็มเกินความจุ)</h2>
+        <div class="card-hdr">
+          <h2>จำนวนช่องว่างคงเหลือเฉลี่ยรายชั่วโมง (สีแดง = เต็มเกินความจุ)</h2>
+          <button class="btn-png" onclick="downloadChartPNG('cAvailBars','10_ช่องว่างคงเหลือรายชั่วโมง')">📷 บันทึกรูป PNG</button>
+        </div>
         <div class="desc">คำนวณจาก ความจุลาน − รถจอดสะสมเฉลี่ย ณ สิ้นชั่วโมง</div>
         <div class="chart-wrap"><canvas id="cAvailBars"></canvas></div>
       </div>
       <div class="card">
-        <h2>แนวโน้มรถที่ยังจอดอยู่ในลานก่อนเที่ยงคืน (ณ 23:59 น.)</h2>
-        <div class="desc">เฉลี่ยต่อวัน แยกรถรายวัน vs รายเดือน (สังเกตแนวโน้มเพิ่มขึ้นใน ก.ค.–ต.ค.)</div>
+        <div class="card-hdr">
+          <h2>แนวโน้มรถที่ยังจอดอยู่ในลานก่อนเที่ยงคืน (ณ 23:59 น.)</h2>
+          <button class="btn-png" onclick="downloadChartPNG('cPreMid','11_รถจอดค้างก่อนเที่ยงคืน')">📷 บันทึกรูป PNG</button>
+        </div>
+        <div class="desc">เฉลี่ยต่อวัน แยกรถรายวัน vs รายเดือน</div>
         <div class="chart-wrap"><canvas id="cPreMid"></canvas></div>
       </div>
     </div>
@@ -270,83 +343,89 @@
   <section id="tab5" class="tab-panel">
     <div class="grid-2">
       <div class="card">
-        <h2>รถจอด 0–15 นาที รายชั่วโมง (จำนวนเฉลี่ย/วัน & สัดส่วน %)</h2>
+        <div class="card-hdr">
+          <h2>รถจอด 0–15 นาที รายชั่วโมง (จำนวนเฉลี่ย/วัน & สัดส่วน %)</h2>
+          <button class="btn-png" onclick="downloadChartPNG('cS15Hourly','12_รถจอด0-15นาที_รายชั่วโมง')">📷 บันทึกรูป PNG</button>
+        </div>
         <div class="desc">ช่วงเย็น 17:00–19:00 น. มีสัดส่วนจอด 0–15 นาทีสูงสุด (ลาน 3 สูงถึง 36%)</div>
         <div class="chart-wrap"><canvas id="cS15Hourly"></canvas></div>
       </div>
       <div class="card">
-        <h2>แนวโน้มสัดส่วนรถจอด 0–15 นาที รายเดือน แยกลานจอดรถ</h2>
-        <div class="desc">สัดส่วนลดลงต่อเนื่องจาก พ.ค. (14.4%) เหลือ ต.ค. (12.9%) แต่ลาน 3 สูงกว่าลาน 2 ชัดเจน</div>
+        <div class="card-hdr">
+          <h2>แนวโน้มสัดส่วนรถจอด 0–15 นาที รายเดือน แยกลานจอดรถ</h2>
+          <button class="btn-png" onclick="downloadChartPNG('cS15Monthly','13_แนวโน้มจอด0-15นาที_รายเดือน')">📷 บันทึกรูป PNG</button>
+        </div>
+        <div class="desc">ลาน 3 มีสัดส่วนรถจอดสั้น 0–15 นาทีสูงกว่าลาน 2 ชัดเจนทุกเดือน</div>
         <div class="chart-wrap"><canvas id="cS15Monthly"></canvas></div>
       </div>
     </div>
   </section>
 
-  <!-- TAB 6 -->
+  <!-- TAB 6: EXECUTIVE PRESENTATION NOTES & AUDIT -->
   <section id="tab6" class="tab-panel">
-    <div class="card" style="margin-bottom:18px">
-      <h2>📥 นำเข้าไฟล์ข้อมูลเดือนใหม่แบบอัตโนมัติ (Auto-Import .xls / .xlsx / Raw CSV)</h2>
-      <div class="desc">ลากและวางไฟล์รายงานระบบจอดรถ (<code>In-Out Report by GateOut .xls/.xlsx</code> เช่น เดือน 11, 12) หรือไฟล์ <code>Raw_Hourly_Fact.csv</code> ได้ทีละหลายไฟล์ — ระบบจะอ่าน แยกรายวัน/รายเดือน และอัปเดตกราฟทั้งหมดบนหน้าเว็บให้ทันที!</div>
-      <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
-        <div style="font-size:2rem">📂</div>
-        <div style="font-weight:700;color:var(--primary);margin-top:6px">คลิกเลือกไฟล์ หรือ ลากไฟล์ .xls / .xlsx / .csv มาวางที่นี่</div>
-        <div style="font-size:0.82rem;color:var(--muted);margin-top:4px">รองรับการเลือกพร้อมกันหลายไฟล์ (ประมวลผลในเบราว์เซอร์ 100% ปลอดภัย ไม่ส่งข้อมูลออกนอกเครื่อง)</div>
-        <input type="file" id="fileInput" multiple accept=".xls,.xlsx,.csv" style="display:none" onchange="handleFiles(this.files)" />
-      </div>
-      <div id="importLog"></div>
-    </div>
-
     <div class="grid-2">
       <div class="card">
-        <h2>ตรวจสอบวันระบบบันทึกขาดหาย 3 วันในลาน 2 (Raw .xls vs ไฟล์แนบ)</h2>
+        <div class="card-hdr">
+          <h2>ข้อมูลซ่อมแซมวันระบบบันทึกขาดหายในลาน 2</h2>
+          <button class="btn-png" onclick="downloadChartPNG('cOutageComp','14_ตรวจสอบวันระบบบันทึกขาดหาย')">📷 บันทึกรูป PNG</button>
+        </div>
         <div class="desc">เลือกดูวันที่: <select id="outageDaySel" onchange="renderOutageChart()">
-          <option value="2026-01-21">2026-01-21 (เติม +3,199 คัน)</option>
-          <option value="2026-05-24">2026-05-24 (เติม +2,151 คัน)</option>
-          <option value="2026-06-03">2026-06-03 (เติม +2,044 คัน)</option>
+          <option value="2026-01-21">2026-01-21 (เติมส่วนขาด +3,199 คัน)</option>
+          <option value="2026-05-24">2026-05-24 (เติมส่วนขาด +2,151 คัน)</option>
+          <option value="2026-06-03">2026-06-03 (เติมส่วนขาด +2,044 คัน)</option>
         </select></div>
         <div class="chart-wrap"><canvas id="cOutageComp"></canvas></div>
       </div>
       <div class="card">
-        <h2>ประเมินความเพียงพอของข้อมูลซ่อมวันระบบล่ม (ไฟล์แนบรายชั่วโมง)</h2>
-        <div class="table-scroll">
+        <div class="card-hdr">
+          <h2>สรุปประเด็นสำคัญและข้อเสนอแนะสำหรับนำเสนอผู้บริหาร</h2>
+        </div>
+        <div class="table-scroll" style="max-height:360px">
           <table>
-            <thead><tr><th>หัวข้อรายงาน</th><th>เพียงพอหรือไม่?</th><th>คำอธิบาย / การจัดการ</th></tr></thead>
+            <thead><tr><th style="width:26%">ประเด็นตรวจสอบ</th><th style="width:42%">ข้อค้นพบจากข้อมูล</th><th style="width:32%">ข้อเสนอแนะ</th></tr></thead>
             <tbody>
-              <tr><td>1. รถเข้ารายวัน (ยอดรวม)</td><td><span class="badge badge-ok">เพียงพอ 100%</span></td><td>ใช้เติมยอดรวมรายวันได้แม่นยำ (เพิ่ม +7,394 คัน)</td></tr>
-              <tr><td>3. รถเข้ารายชั่วโมง</td><td><span class="badge badge-ok">เพียงพอ 100%</span></td><td>ตรงกับระบบถึงระดับรายชั่วโมง (21 ม.ค. ชม. 19–23 ตรงเป๊ะ 0 คลาดเคลื่อน)</td></tr>
-              <tr><td>1, 4. แยกรายวัน vs รายเดือน</td><td><span class="badge badge-warn">ต้องประมาณการ</span></td><td>ไม่มีเลขทะเบียน จึงประมาณจากสัดส่วน ชม. เดียวกันในเดือนนั้น (~3.3% รายเดือน)</td></tr>
-              <tr><td>2. เวลาจอด / 5. จอด 0–15 นาที</td><td><span class="badge badge-danger">ไม่เพียงพอ</span></td><td>ไม่มีเวลาออก (Time Out) จึงไม่นำชั่วโมงที่เติมมารวมในค่าเฉลี่ยเวลาจอด</td></tr>
-              <tr><td>4. รถออก & ช่องว่างรายชั่วโมง</td><td><span class="badge badge-danger">ไม่เพียงพอ</span></td><td>มีเฉพาะยอดเข้า ไม่มีเวลาออก จึงคำนวณรถจอดสะสมจริงของ 3 วันนั้นไม่ได้</td></tr>
+              <tr><td><strong>ยอดรถลดลงเดือน ก.ย.</strong></td><td>1–24 ก.ย. ยอดปกติ (~6,429 คัน/วัน) แต่ 26–30 ก.ย. ร่วงพร้อมกันทั้ง 2 ลานถึง -75% และฟื้นกลับเป็น 6,395 คัน/วันใน พ.ย.</td><td>ตรวจสอบเหตุการณ์หน้างานช่วง 25 ก.ย.–1 ต.ค. และเทียบ Log ฝั่งทางเข้า</td></tr>
+              <tr><td><strong>ลาน 3 เต็มเกินความจุ 82 คัน</strong></td><td>ช่วง 08:00–14:00 น. จอดสะสมเฉลี่ย 84–89 คัน (108.7%) สูงสุด 143 คัน</td><td>สอดคล้องกับรถจอด 0–15 นาทีลาน 3 ที่สูง 17–18% แนะนำป้ายบอกช่องว่าง Real-time ระบายไปลาน 2</td></tr>
+              <tr><td><strong>รถค้างก่อนเที่ยงคืน & บัตรหาย</strong></td><td>รถค้างก่อนเที่ยงคืนเพิ่มจาก ~69 คัน/วัน (ครึ่งปีแรก) เป็น 78–84 คัน/วัน (ก.ค.–พ.ย.)</td><td>ตรวจสอบรถค้างคืนและทะเบียนกลุ่มที่เข้าออกถี่ผิดปกติ</td></tr>
+              <tr><td><strong>การตรวจสอบความถูกต้อง</strong></td><td>ตัดไฟล์เดือน ก.พ. ที่ซ้ำในโฟลเดอร์ 01 (56 ไฟล์) และซ่อมยอด 3 วันระบบล่มเรียบร้อย</td><td>ควรเทียบ Log ทางเข้า (Gate-In) กับทางออก (Gate-Out) เพื่อตรวจจับรถหลุดได้สมบูรณ์</td></tr>
             </tbody>
           </table>
         </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>สรุปผลการตรวจสอบความถูกต้องของข้อมูลและข้อกังวลผู้บริหาร</h2>
-      <div class="table-scroll">
-        <table>
-          <thead><tr><th style="width:22%">ประเด็นตรวจสอบ</th><th style="width:43%">ข้อค้นพบจากข้อมูลจริง</th><th style="width:35%">ข้อเสนอแนะ</th></tr></thead>
-          <tbody>
-            <tr><td><strong>ไฟล์ซ้ำในโฟลเดอร์ 01</strong></td><td>พบไฟล์เดือน ก.พ. (28 วัน x 2 ลาน = 56 ไฟล์, 174,079 รายการ) ซ้ำในโฟลเดอร์ 01</td><td>ระบบตัดออกอัตโนมัติแล้ว หากไม่ตัดจะทำให้เดือน ม.ค. สูงเกินจริงเกือบ 2 เท่า</td></tr>
-            <tr><td><strong>ยอดรถลดลงเดือน ก.ย.</strong></td><td>วันที่ 1–24 ก.ย. ยอดปกติ (6,429 คัน/วัน) แต่ 26–30 ก.ย. ร่วงพร้อมกันทั้ง 2 ลานถึง -75%</td><td>ตรวจสอบเหตุการณ์หน้างานช่วง 25 ก.ย.–1 ต.ค. และเปรียบเทียบ Log ทางเข้า</td></tr>
-            <tr><td><strong>ลาน 3 เต็มเกินความจุ 82 คัน</strong></td><td>ช่วง 08:00–14:00 น. จอดสะสมเฉลี่ย 84–89 คัน (108.7%) สูงสุด 143 คัน</td><td>สอดคล้องกับรถจอด 0–15 นาทีลาน 3 ที่สูง 17–18% แนะนำป้ายบอกช่องว่าง Real-time ระบายไปลาน 2</td></tr>
-            <tr><td><strong>รถค้างคืน & บัตรหายเพิ่ม</strong></td><td>รถค้างก่อนเที่ยงคืนเพิ่มจาก ~69 คัน/วัน (ครึ่งปีแรก) เป็น 78–84 คัน/วัน (ก.ค.–ต.ค.)</td><td>ตรวจสอบรถค้างคืนและทะเบียนกลุ่ม 15-XXXX ที่เข้าออกถี่กว่า 2,000 ครั้ง</td></tr>
-          </tbody>
-        </table>
       </div>
     </div>
   </section>
 </main>
 
 <script>
-// DYNAMIC JSON LOADER (GitHub Pages / Web Hosting)
-let DATA = null;
+// White-background plugin so exported PNGs look crisp in PowerPoint!
+const whiteBgPlugin = {
+  id: 'customCanvasBackgroundColor',
+  beforeDraw: (chart) => {
+    const ctx = chart.canvas.getContext('2d');
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-over';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, chart.width, chart.height);
+    ctx.restore();
+  }
+};
+Chart.register(whiteBgPlugin);
 
+let DATA = null;
+let ALL_SORTED_DATES = [];
 const charts = {};
+
 function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
 function fmt(n, d=0) { return Number(n||0).toLocaleString('th-TH', { minimumFractionDigits: d, maximumFractionDigits: d }); }
+
+function downloadChartPNG(canvasId, filename) {
+  const c = charts[canvasId];
+  if (!c) return;
+  const link = document.createElement('a');
+  link.download = filename + '.png';
+  link.href = c.toBase64Image('image/png', 1.0);
+  link.click();
+}
 
 function switchTab(id, btn) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
@@ -357,31 +436,69 @@ function switchTab(id, btn) {
 }
 
 function initControls() {
-  const sel = document.getElementById('monthFilter');
-  sel.innerHTML = '<option value="ALL">ทุกเดือน (' + DATA.meta.months[0] + ' ถึง ' + DATA.meta.months[DATA.meta.months.length-1] + ')</option>';
+  ALL_SORTED_DATES = [...new Set(DATA.daily_detail.map(r => r.entry_date))].sort();
+  const minD = ALL_SORTED_DATES[0];
+  const maxD = ALL_SORTED_DATES[ALL_SORTED_DATES.length - 1];
+  const elFrom = document.getElementById('dateFrom');
+  const elTo = document.getElementById('dateTo');
+  elFrom.min = minD; elFrom.max = maxD; elFrom.value = minD;
+  elTo.min = minD; elTo.max = maxD; elTo.value = maxD;
+
+  // Populate table-specific month filter in Tab 2
+  const tm = document.getElementById('tDurMonth');
+  tm.innerHTML = '<option value="ALL">ทุกเดือน (ตามช่วงวันที่)</option>';
   DATA.meta.months.forEach(m => {
     const opt = document.createElement('option');
     opt.value = m; opt.textContent = 'เดือน ' + m;
-    sel.appendChild(opt);
+    tm.appendChild(opt);
   });
-  document.getElementById('metaSubtitle').textContent =
-    `ข้อมูลทั้งหมด ${fmt(DATA.meta.total_records)} รายการ (${DATA.meta.months[0]} – ${DATA.meta.months[DATA.meta.months.length-1]}) | ตัดไฟล์ซ้ำ ${DATA.meta.duplicate_files_removed} ไฟล์ | ความจุจริง: ลาน 2 = 346 คัน, ลาน 3 = 82 คัน`;
+}
+
+function setPreset(mode, btn) {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const minD = ALL_SORTED_DATES[0];
+  const maxD = ALL_SORTED_DATES[ALL_SORTED_DATES.length - 1];
+  const maxDateObj = new Date(maxD + 'T00:00:00');
+  let fromD = minD;
+  if (mode === 'LAST_MONTH') {
+    fromD = maxD.slice(0, 7) + '-01';
+  } else if (mode === '30D') {
+    const d = new Date(maxDateObj); d.setDate(d.getDate() - 29);
+    fromD = d.toISOString().slice(0, 10);
+  } else if (mode === '7D') {
+    const d = new Date(maxDateObj); d.setDate(d.getDate() - 6);
+    fromD = d.toISOString().slice(0, 10);
+  }
+  if (fromD < minD) fromD = minD;
+  document.getElementById('dateFrom').value = fromD;
+  document.getElementById('dateTo').value = maxD;
+  renderAll();
+}
+
+function onDateChange() {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  renderAll();
 }
 
 function getFilters() {
+  const dFrom = document.getElementById('dateFrom').value || ALL_SORTED_DATES[0];
+  const dTo = document.getElementById('dateTo').value || ALL_SORTED_DATES[ALL_SORTED_DATES.length - 1];
+  const mFrom = dFrom.slice(0, 7);
+  const mTo = dTo.slice(0, 7);
   return {
-    month: document.getElementById('monthFilter').value,
+    dFrom, dTo, mFrom, mTo,
     lot: document.getElementById('lotFilter').value,
-    usePatch: document.getElementById('patchToggle').checked,
+    carType: document.getElementById('typeFilter').value,
     capL2: Number(document.getElementById('capL2').value) || 346,
     capL3: Number(document.getElementById('capL3').value) || 82,
   };
 }
 
-function matchLot(itemLot, filterLot) {
-  if (filterLot === 'ALL') return true;
-  return itemLot === filterLot;
-}
+function inMonthRange(m, f) { return m >= f.mFrom && m <= f.mTo; }
+function inDateRange(d, f) { return d >= f.dFrom && d <= f.dTo; }
+function matchLot(itemLot, filterLot) { return filterLot === 'ALL' || itemLot === filterLot; }
+function matchType(ct, filterType) { return filterType === 'ALL' || ct === filterType; }
 
 function renderAll() {
   const f = getFilters();
@@ -394,32 +511,35 @@ function renderAll() {
 }
 
 function renderTab1(f) {
-  const rows = DATA.daily_detail.filter(r =>
-    (f.month === 'ALL' || r.entry_month === f.month) && matchLot(r.lot, f.lot)
-  );
+  const rows = DATA.daily_detail.filter(r => inDateRange(r.entry_date, f) && matchLot(r.lot, f.lot));
   const byDate = {};
-  let totDaily = 0, totMonthly = 0, totS15 = 0, totOv = 0, totPatch = 0;
+  let totDaily = 0, totMonthly = 0, totS15 = 0, totOv = 0, totRawForS15 = 0;
+
   rows.forEach(r => {
-    const extra = f.usePatch ? (r.patched_extra || 0) : 0;
-    totDaily += r['รายวัน'] + extra;
-    totMonthly += r['รายเดือน'];
+    const extra = r.patched_extra || 0;
+    const dCnt = r['รายวัน'] + extra;
+    const mCnt = r['รายเดือน'];
+    const selCnt = f.carType === 'รายวัน' ? dCnt : (f.carType === 'รายเดือน' ? mCnt : (dCnt + mCnt));
+    const rawSel = f.carType === 'รายวัน' ? r['รายวัน'] : (f.carType === 'รายเดือน' ? mCnt : r['รวมทั้งหมด']);
+
+    totDaily += dCnt;
+    totMonthly += mCnt;
+    totRawForS15 += rawSel;
     totS15 += r['จอด_0_15_นาที'];
     totOv += r['ค้างคืน_ออกวันถัดไป'];
-    totPatch += extra;
-    if (!byDate[r.entry_date]) byDate[r.entry_date] = { raw: 0, patched: 0, note: '' };
-    byDate[r.entry_date].raw += r['รวมทั้งหมด'];
-    byDate[r.entry_date].patched += r['รวมทั้งหมด'] + extra;
-    if (r['หมายเหตุตรวจสอบ']) byDate[r.entry_date].note = r['หมายเหตุตรวจสอบ'];
+
+    if (!byDate[r.entry_date]) byDate[r.entry_date] = 0;
+    byDate[r.entry_date] += selCnt;
   });
-  const totalCars = totDaily + totMonthly;
+
+  const totalCars = f.carType === 'รายวัน' ? totDaily : (f.carType === 'รายเดือน' ? totMonthly : (totDaily + totMonthly));
   const nDays = Object.keys(byDate).length || 1;
   const avgDay = totalCars / nDays;
-  const pctMonthly = totalCars ? (totMonthly / totalCars * 100) : 0;
-  const rawTotalForS15 = totalCars - totPatch;
-  const pctS15 = rawTotalForS15 ? (totS15 / rawTotalForS15 * 100) : 0;
+  const pctMonthly = (totDaily + totMonthly) ? (totMonthly / (totDaily + totMonthly) * 100) : 0;
+  const pctS15 = totRawForS15 ? (totS15 / totRawForS15 * 100) : 0;
 
   // Avg duration from duration table
-  const dRows = DATA.duration.filter(r => (f.month === 'ALL' || r.entry_month === f.month) && matchLot(r.lot, f.lot));
+  const dRows = DATA.duration.filter(r => inMonthRange(r.entry_month, f) && matchLot(r.lot, f.lot) && matchType(r.car_type, f.carType));
   let durWeighted = 0, durCnt = 0;
   dRows.forEach(r => { durWeighted += r['เฉลี่ย_นาที'] * r['จำนวนรถ']; durCnt += r['จำนวนรถ']; });
   const avgDur = durCnt ? durWeighted / durCnt : 0;
@@ -428,7 +548,7 @@ function renderTab1(f) {
     <div class="kpi-card">
       <div class="kpi-label">จำนวนรถยนต์เข้าทั้งหมด</div>
       <div class="kpi-value">${fmt(totalCars)} <span style="font-size:0.9rem;font-weight:500">คัน</span></div>
-      <div class="kpi-sub">ครอบคลุม ${nDays} วัน ${f.usePatch && totPatch>0 ? `(รวมซ่อมวันล่ม +${fmt(totPatch)} คัน)` : '(ข้อมูลดิบ .xls)'}</div>
+      <div class="kpi-sub">ช่วงวันที่ ${f.dFrom} ถึง ${f.dTo} (${nDays} วัน)</div>
     </div>
     <div class="kpi-card green">
       <div class="kpi-label">เฉลี่ยต่อวัน</div>
@@ -448,33 +568,31 @@ function renderTab1(f) {
     <div class="kpi-card red">
       <div class="kpi-label">รถจอด 0–15 นาที</div>
       <div class="kpi-value">${fmt(pctS15, 2)}%</div>
-      <div class="kpi-sub">จำนวน ${fmt(totS15)} คัน (จากข้อมูลมีเวลาออก)</div>
+      <div class="kpi-sub">จำนวน ${fmt(totS15)} คัน</div>
     </div>
   `;
 
-  // Chart 1A: Monthly Avg Trend
-  const months = DATA.meta.months;
-  const rawAvgs = [], patchedAvgs = [], cleanAvgs = [];
-  const dailyArr = [], monthlyArr = [];
+  // Chart 1A & 1B: Monthly trend for months in selected range
+  const months = DATA.meta.months.filter(m => inMonthRange(m, f));
+  const avgArr = [], cleanAvgs = [], dailyArr = [], monthlyArr = [];
   months.forEach(m => {
-    const mRows = DATA.daily_detail.filter(r => r.entry_month === m && matchLot(r.lot, f.lot));
+    const mRows = DATA.daily_detail.filter(r => r.entry_month === m && inDateRange(r.entry_date, f) && matchLot(r.lot, f.lot));
     const dMap = {};
     let mDaily = 0, mMonthly = 0;
     mRows.forEach(r => {
-      if (!dMap[r.entry_date]) dMap[r.entry_date] = { raw: 0, patched: 0 };
-      dMap[r.entry_date].raw += r['รวมทั้งหมด'];
-      dMap[r.entry_date].patched += r['รวมทั้งหมด'] + (r.patched_extra || 0);
-      mDaily += r['รายวัน'] + (f.usePatch ? (r.patched_extra || 0) : 0);
-      mMonthly += r['รายเดือน'];
+      const dCnt = r['รายวัน'] + (r.patched_extra || 0);
+      const mCnt = r['รายเดือน'];
+      const val = f.carType === 'รายวัน' ? dCnt : (f.carType === 'รายเดือน' ? mCnt : (dCnt + mCnt));
+      dMap[r.entry_date] = (dMap[r.entry_date] || 0) + val;
+      mDaily += dCnt; mMonthly += mCnt;
     });
     const dates = Object.keys(dMap);
     const dn = dates.length || 1;
-    rawAvgs.push(+(dates.reduce((s,d)=>s+dMap[d].raw,0)/dn).toFixed(1));
-    patchedAvgs.push(+(dates.reduce((s,d)=>s+dMap[d].patched,0)/dn).toFixed(1));
+    avgArr.push(+(dates.reduce((s,d)=>s+dMap[d],0)/dn).toFixed(1));
     const cleanDates = dates.filter(d => !['2026-09-26','2026-09-27','2026-09-28','2026-09-29','2026-09-30'].includes(d));
-    cleanAvgs.push(+(cleanDates.reduce((s,d)=>s+dMap[d].patched,0)/(cleanDates.length||1)).toFixed(1));
-    dailyArr.push(mDaily);
-    monthlyArr.push(mMonthly);
+    cleanAvgs.push(+(cleanDates.reduce((s,d)=>s+dMap[d],0)/(cleanDates.length||1)).toFixed(1));
+    dailyArr.push(f.carType === 'รายเดือน' ? 0 : mDaily);
+    monthlyArr.push(f.carType === 'รายวัน' ? 0 : mMonthly);
   });
 
   destroyChart('cMonthlyAvg');
@@ -483,9 +601,8 @@ function renderTab1(f) {
     data: {
       labels: months,
       datasets: [
-        { label: 'เฉลี่ย/วัน (ซ่อมวันล่ม 3 วัน)', data: patchedAvgs, borderColor: '#1e3a5f', backgroundColor: '#1e3a5f', borderWidth: 2.5, tension: 0.2 },
-        { label: 'เฉลี่ย/วัน (ไฟล์ดิบ .xls)', data: rawAvgs, borderColor: '#94a3b8', borderDash: [5,5], borderWidth: 2, tension: 0.2 },
-        { label: 'เฉลี่ย/วัน (ตัดช่วงวิกฤต 26-30 ก.ย.)', data: cleanAvgs, borderColor: '#16a34a', borderDash: [3,3], borderWidth: 2, tension: 0.2 }
+        { label: 'เฉลี่ย/วัน (ข้อมูลจริง)', data: avgArr, borderColor: '#1e3a5f', backgroundColor: '#1e3a5f', borderWidth: 2.5, tension: 0.2 },
+        { label: 'เฉลี่ย/วัน (ตัดช่วงวิกฤต 26-30 ก.ย.)', data: cleanAvgs, borderColor: '#16a34a', borderDash: [4,4], borderWidth: 2, tension: 0.2 }
       ]
     },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
@@ -512,9 +629,10 @@ function renderTab1(f) {
     data: {
       labels: sortedDates,
       datasets: [{
-        label: f.usePatch ? 'จำนวนรถเข้า/วัน (รวมซ่อมวันล่ม)' : 'จำนวนรถเข้า/วัน (ไฟล์ดิบ .xls)',
-        data: sortedDates.map(d => f.usePatch ? byDate[d].patched : byDate[d].raw),
-        borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.1)', fill: true, pointRadius: sortedDates.length > 60 ? 1.5 : 3.5, tension: 0.15
+        label: 'จำนวนรถเข้า/วัน (คัน)',
+        data: sortedDates.map(d => byDate[d]),
+        borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.1)', fill: true,
+        pointRadius: sortedDates.length > 60 ? 1.5 : 3.5, tension: 0.15
       }]
     },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
@@ -523,37 +641,37 @@ function renderTab1(f) {
 
 function renderTab2(f) {
   const buckets = ['0-15 นาที','15-30 นาที','30-60 นาที','1-2 ชม.','2-4 ชม.','4-8 ชม.','8-24 ชม.','>24 ชม.'];
-  const rows = DATA.duration.filter(r => (f.month === 'ALL' || r.entry_month === f.month) && matchLot(r.lot, f.lot));
+  const rows = DATA.duration.filter(r => inMonthRange(r.entry_month, f) && matchLot(r.lot, f.lot) && matchType(r.car_type, f.carType));
   const sums = { 'รายวัน': Array(8).fill(0), 'รายเดือน': Array(8).fill(0) };
-  rows.forEach(r => {
-    buckets.forEach((b, i) => { sums[r.car_type][i] += Number(r[b] || 0); });
-  });
+  rows.forEach(r => { buckets.forEach((b, i) => { sums[r.car_type][i] += Number(r[b] || 0); }); });
   const totD = sums['รายวัน'].reduce((a,b)=>a+b,0) || 1;
   const totM = sums['รายเดือน'].reduce((a,b)=>a+b,0) || 1;
+
+  const dsBuckets = [];
+  if (f.carType !== 'รายเดือน') dsBuckets.push({ label: 'รถรายวัน (% ของรถรายวัน)', data: sums['รายวัน'].map(v => +(v/totD*100).toFixed(1)), backgroundColor: '#2b5c8f' });
+  if (f.carType !== 'รายวัน') dsBuckets.push({ label: 'รถรายเดือน (% ของรถรายเดือน)', data: sums['รายเดือน'].map(v => +(v/totM*100).toFixed(1)), backgroundColor: '#16a34a' });
 
   destroyChart('cDurBuckets');
   charts['cDurBuckets'] = new Chart(document.getElementById('cDurBuckets'), {
     type: 'bar',
-    data: {
-      labels: buckets,
-      datasets: [
-        { label: 'รถรายวัน (% ของรถรายวัน)', data: sums['รายวัน'].map(v => +(v/totD*100).toFixed(1)), backgroundColor: '#2b5c8f' },
-        { label: 'รถรายเดือน (% ของรถรายเดือน)', data: sums['รายเดือน'].map(v => +(v/totM*100).toFixed(1)), backgroundColor: '#16a34a' }
-      ]
-    },
+    data: { labels: buckets, datasets: dsBuckets },
     options: { responsive: true, maintainAspectRatio: false, scales: { y: { title: { display: true, text: '% ของรถแต่ละประเภท' } } }, plugins: { legend: { position: 'bottom' } } }
   });
 
-  // Avg & Median by lot & car_type
-  const groups = ['ลาน 2 - รายวัน','ลาน 2 - รายเดือน','ลาน 3 - รายวัน','ลาน 3 - รายเดือน'];
-  const avgVals = [], medVals = [];
+  const groups = ['ลาน 2 - รายวัน','ลาน 2 - รายเดือน','ลาน 3 - รายวัน','ลาน 3 - รายเดือน'].filter(g => {
+    const [lt, ct] = g.split(' - ');
+    return matchLot(lt, f.lot) && matchType(ct, f.carType);
+  });
+  const avgVals = [], medVals = [], p90Vals = [];
   groups.forEach(g => {
     const [lt, ct] = g.split(' - ');
-    const sub = DATA.duration.filter(r => (f.month==='ALL'||r.entry_month===f.month) && r.lot===lt && r.car_type===ct);
+    const sub = DATA.duration.filter(r => inMonthRange(r.entry_month, f) && r.lot===lt && r.car_type===ct);
     const cnt = sub.reduce((s,r)=>s+r['จำนวนรถ'],0) || 1;
     avgVals.push(+(sub.reduce((s,r)=>s+r['เฉลี่ย_นาที']*r['จำนวนรถ'],0)/cnt).toFixed(1));
     medVals.push(+(sub.reduce((s,r)=>s+r['มัธยฐาน_นาที']*r['จำนวนรถ'],0)/cnt).toFixed(1));
+    p90Vals.push(+(sub.reduce((s,r)=>s+r['P90_นาที']*r['จำนวนรถ'],0)/cnt).toFixed(1));
   });
+
   destroyChart('cDurAvg');
   charts['cDurAvg'] = new Chart(document.getElementById('cDurAvg'), {
     type: 'bar',
@@ -561,15 +679,33 @@ function renderTab2(f) {
       labels: groups,
       datasets: [
         { label: 'เวลาจอดเฉลี่ย (นาที)', data: avgVals, backgroundColor: '#f97316' },
-        { label: 'มัธยฐาน Median (นาที)', data: medVals, backgroundColor: '#1e3a5f' }
+        { label: 'มัธยฐาน Median (นาที)', data: medVals, backgroundColor: '#1e3a5f' },
+        { label: 'P90 — 90% จอดไม่เกิน (นาที)', data: p90Vals, backgroundColor: '#94a3b8' }
       ]
     },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
   });
 
-  // Summary Table
-  let html = '<table><thead><tr><th>เดือน</th><th>ลานจอดรถ</th><th>ประเภท</th><th>จำนวนรถ</th><th>เฉลี่ย (นาที)</th><th>มัธยฐาน</th><th>P90</th><th>0-15 นาที</th><th>30-60 นาที</th><th>1-2 ชม.</th><th>>2 ชม.</th></tr></thead><tbody>';
-  rows.slice(0, 80).forEach(r => {
+  renderDurationTable();
+}
+
+function getFilteredDurationRows() {
+  const f = getFilters();
+  const tm = document.getElementById('tDurMonth').value;
+  const tl = document.getElementById('tDurLot').value;
+  const tt = document.getElementById('tDurType').value;
+  return DATA.duration.filter(r =>
+    inMonthRange(r.entry_month, f) &&
+    (tm === 'ALL' || r.entry_month === tm) &&
+    matchLot(r.lot, f.lot) && (tl === 'ALL' || r.lot === tl) &&
+    matchType(r.car_type, f.carType) && (tt === 'ALL' || r.car_type === tt)
+  );
+}
+
+function renderDurationTable() {
+  const rows = getFilteredDurationRows();
+  let html = '<table><thead><tr><th>เดือน</th><th>ลานจอดรถ</th><th>ประเภท</th><th>จำนวนรถ</th><th>เฉลี่ย (นาที)</th><th>มัธยฐาน</th><th title="รถ 90% ทั้งหมดจอดไม่เกินเวลานี้">P90 (นาที)</th><th>0-15 นาที</th><th>30-60 นาที</th><th>1-2 ชม.</th><th>>2 ชม.</th></tr></thead><tbody>';
+  rows.forEach(r => {
     const gt2 = (r['2-4 ชม.']||0)+(r['4-8 ชม.']||0)+(r['8-24 ชม.']||0)+(r['>24 ชม.']||0);
     html += `<tr><td>${r.entry_month}</td><td>${r.lot}</td><td>${r.car_type}</td><td>${fmt(r['จำนวนรถ'])}</td><td>${fmt(r['เฉลี่ย_นาที'],1)}</td><td>${fmt(r['มัธยฐาน_นาที'],1)}</td><td>${fmt(r['P90_นาที'],1)}</td><td>${fmt(r['0-15 นาที'])}</td><td>${fmt(r['30-60 นาที'])}</td><td>${fmt(r['1-2 ชม.'])}</td><td>${fmt(gt2)}</td></tr>`;
   });
@@ -577,14 +713,27 @@ function renderTab2(f) {
   document.getElementById('tDurTable').innerHTML = html;
 }
 
+function exportDurationCSV() {
+  const rows = getFilteredDurationRows();
+  const hdr = ['เดือน','ลานจอดรถ','ประเภทรถ','จำนวนรถ','เฉลี่ย_นาที','มัธยฐาน_นาที','P90_นาที','0-15 นาที','30-60 นาที','1-2 ชม.','>2 ชม.'];
+  const lines = [hdr.join(',')];
+  rows.forEach(r => {
+    const gt2 = (r['2-4 ชม.']||0)+(r['4-8 ชม.']||0)+(r['8-24 ชม.']||0)+(r['>24 ชม.']||0);
+    lines.push([r.entry_month,r.lot,r.car_type,r['จำนวนรถ'],r['เฉลี่ย_นาที'],r['มัธยฐาน_นาที'],r['P90_นาที'],r['0-15 นาที'],r['30-60 นาที'],r['1-2 ชม.'],gt2].join(','));
+  });
+  const blob = new Blob(['\uFEFF'+lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'Parking_Duration_Summary.csv'; a.click();
+}
+
 function renderTab3(f) {
   const hrs = Array.from({length:24}, (_,i)=>String(i).padStart(2,'0')+':00');
-  const lots = ['ลาน 2','ลาน 3'];
+  const lots = ['ลาน 2','ลาน 3'].filter(lt => matchLot(lt, f.lot));
   const colors = {'ลาน 2':'#1e3a5f','ลาน 3':'#f97316'};
   const ds = lots.map(lt => {
     const vals = Array.from({length:24}, (_,h) => {
-      const sub = DATA.hourly_entries.filter(r => (f.month==='ALL'||r.entry_month===f.month) && r.lot===lt && r.entry_hour===h);
-      const tot = sub.reduce((s,r)=>s+r['รวม'],0);
+      const sub = DATA.hourly_entries.filter(r => inMonthRange(r.entry_month, f) && r.lot===lt && r.entry_hour===h);
+      const tot = sub.reduce((s,r)=>s+(f.carType==='รายวัน'?r['รายวัน']:(f.carType==='รายเดือน'?r['รายเดือน']:r['รวม'])),0);
       const days = sub.reduce((s,r)=>s+r.n_days,0) || 1;
       return +(tot/days).toFixed(1);
     });
@@ -596,12 +745,9 @@ function renderTab3(f) {
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
   });
 
-  // Daily vs Monthly hourly for selected lot
   const dArr = [], mArr = [];
   for (let h=0; h<24; h++) {
-    const sub = DATA.hourly_entries.filter(r => (f.month==='ALL'||r.entry_month===f.month) && matchLot(r.lot, f.lot) && r.entry_hour===h);
-    const monthsSet = new Set(sub.map(r => r.entry_month));
-    // Sum of daily averages across selected lots
+    const sub = DATA.hourly_entries.filter(r => inMonthRange(r.entry_month, f) && matchLot(r.lot, f.lot) && r.entry_hour===h);
     const byLot = {};
     sub.forEach(r => {
       if (!byLot[r.lot]) byLot[r.lot] = { d:0, m:0, days:0 };
@@ -609,7 +755,8 @@ function renderTab3(f) {
     });
     let sumD = 0, sumM = 0;
     Object.values(byLot).forEach(x => { sumD += x.d/(x.days||1); sumM += x.m/(x.days||1); });
-    dArr.push(+sumD.toFixed(1)); mArr.push(+sumM.toFixed(1));
+    dArr.push(f.carType==='รายเดือน' ? 0 : +sumD.toFixed(1));
+    mArr.push(f.carType==='รายวัน' ? 0 : +sumM.toFixed(1));
   }
   destroyChart('cHrType');
   charts['cHrType'] = new Chart(document.getElementById('cHrType'), {
@@ -627,10 +774,10 @@ function renderTab4(f) {
   function buildOccChart(canvasId, lotName, cap, barColor) {
     const dAvg=[], mAvg=[], pMax=[];
     for (let h=0; h<24; h++) {
-      const sub = DATA.hourly_occupancy.filter(r => (f.month==='ALL'||r.month===f.month) && r.lot===lotName && r.hour===h);
+      const sub = DATA.hourly_occupancy.filter(r => inMonthRange(r.month, f) && r.lot===lotName && r.hour===h);
       const n = sub.length || 1;
-      dAvg.push(+(sub.reduce((s,r)=>s+r['จอดสะสม_รายวัน_เฉลี่ย'],0)/n).toFixed(1));
-      mAvg.push(+(sub.reduce((s,r)=>s+r['จอดสะสม_รายเดือน_เฉลี่ย'],0)/n).toFixed(1));
+      dAvg.push(f.carType==='รายเดือน' ? 0 : +(sub.reduce((s,r)=>s+r['จอดสะสม_รายวัน_เฉลี่ย'],0)/n).toFixed(1));
+      mAvg.push(f.carType==='รายวัน' ? 0 : +(sub.reduce((s,r)=>s+r['จอดสะสม_รายเดือน_เฉลี่ย'],0)/n).toFixed(1));
       pMax.push(Math.max(0, ...sub.map(r=>r['จอดสะสม_รวม_สูงสุด_Peak'])));
     }
     destroyChart(canvasId);
@@ -653,15 +800,12 @@ function renderTab4(f) {
   const availL2 = buildOccChart('cOccL2', 'ลาน 2', f.capL2, '#2563eb');
   const availL3 = buildOccChart('cOccL3', 'ลาน 3', f.capL3, '#f97316');
 
-  // Available spaces bar chart (show L2 or L3 based on filter, default both!)
-  const showL3Only = f.lot === 'ลาน 3';
-  const showL2Only = f.lot === 'ลาน 2';
   const availDs = [];
-  if (!showL3Only) availDs.push({
+  if (f.lot !== 'ลาน 3') availDs.push({
     label: `ช่องว่าง ลาน 2 (ความจุ ${f.capL2})`, data: availL2,
     backgroundColor: availL2.map(v => v <= 0 ? '#dc2626' : '#2563eb')
   });
-  if (!showL2Only) availDs.push({
+  if (f.lot !== 'ลาน 2') availDs.push({
     label: `ช่องว่าง ลาน 3 (ความจุ ${f.capL3})`, data: availL3,
     backgroundColor: availL3.map(v => v <= 0 ? '#dc2626' : '#16a34a')
   });
@@ -671,13 +815,12 @@ function renderTab4(f) {
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
   });
 
-  // Pre-midnight trend
-  const months = DATA.meta.months;
+  const months = DATA.meta.months.filter(m => inMonthRange(m, f));
   const pmD = [], pmM = [];
   months.forEach(m => {
-    const sub = DATA.pre_midnight.filter(r => r['เดือน']===m && (f.lot==='ALL' || r['ลานจอดรถ']===f.lot));
-    pmD.push(+(sub.reduce((s,r)=>s+r['ค้างก่อนเที่ยงคืน_รายวัน_เฉลี่ย'],0)).toFixed(1));
-    pmM.push(+(sub.reduce((s,r)=>s+r['ค้างก่อนเที่ยงคืน_รายเดือน_เฉลี่ย'],0)).toFixed(1));
+    const sub = DATA.pre_midnight.filter(r => r['เดือน']===m && matchLot(r['ลานจอดรถ'], f.lot));
+    pmD.push(f.carType==='รายเดือน' ? 0 : +(sub.reduce((s,r)=>s+r['ค้างก่อนเที่ยงคืน_รายวัน_เฉลี่ย'],0)).toFixed(1));
+    pmM.push(f.carType==='รายวัน' ? 0 : +(sub.reduce((s,r)=>s+r['ค้างก่อนเที่ยงคืน_รายเดือน_เฉลี่ย'],0)).toFixed(1));
   });
   destroyChart('cPreMid');
   charts['cPreMid'] = new Chart(document.getElementById('cPreMid'), {
@@ -694,10 +837,9 @@ function renderTab5(f) {
   const hrs = Array.from({length:24}, (_,i)=>String(i).padStart(2,'0')+':00');
   const cnts = [], pcts = [];
   for (let h=0; h<24; h++) {
-    const sub = DATA.short_stay_0_15.filter(r => (f.month==='ALL'||r.entry_month===f.month) && matchLot(r.lot, f.lot) && r.entry_hour===h);
+    const sub = DATA.short_stay_0_15.filter(r => inMonthRange(r.entry_month, f) && matchLot(r.lot, f.lot) && r.entry_hour===h);
     const totIn = sub.reduce((s,r)=>s+r['รถเข้าทั้งหมด'],0) || 1;
-    const tot15 = sub.reduce((s,r)=>s+r['จอด_0_15_รวม'],0);
-    // Average per day across months
+    const tot15 = sub.reduce((s,r)=>s+(f.carType==='รายวัน'?r['จอด_0_15_รายวัน']:(f.carType==='รายเดือน'?r['จอด_0_15_รายเดือน']:r['จอด_0_15_รวม'])),0);
     const mCnt = new Set(sub.map(r=>r.entry_month)).size || 1;
     const avgD = sub.reduce((s,r)=>s+r['จอด_0_15_เฉลี่ยต่อวัน'],0) / mCnt;
     cnts.push(+avgD.toFixed(1));
@@ -723,8 +865,7 @@ function renderTab5(f) {
     }
   });
 
-  // Monthly 0-15% by lot
-  const months = DATA.meta.months;
+  const months = DATA.meta.months.filter(m => inMonthRange(m, f));
   const ds5 = ['ลาน 2','ลาน 3'].map((lt, idx) => {
     const cols = ['#1e3a5f','#f97316'];
     return {
@@ -733,7 +874,7 @@ function renderTab5(f) {
       data: months.map(m => {
         const sub = DATA.short_stay_0_15.filter(r => r.entry_month===m && r.lot===lt);
         const ti = sub.reduce((s,r)=>s+r['รถเข้าทั้งหมด'],0)||1;
-        const t15 = sub.reduce((s,r)=>s+r['จอด_0_15_รวม'],0);
+        const t15 = sub.reduce((s,r)=>s+(f.carType==='รายวัน'?r['จอด_0_15_รายวัน']:(f.carType==='รายเดือน'?r['จอด_0_15_รายเดือน']:r['จอด_0_15_รวม'])),0);
         return +(t15/ti*100).toFixed(2);
       })
     };
@@ -755,126 +896,28 @@ function renderOutageChart() {
       labels: sub.map(r => String(r.hour).padStart(2,'0')+':00'),
       datasets: [
         { label: 'ยอดจากไฟล์ดิบ (.xls)', data: sub.map(r => r['ยอดจากไฟล์ดิบ_XLS']), backgroundColor: '#94a3b8' },
-        { label: 'ยอดจากไฟล์แนบ (รายชั่วโมง)', data: sub.map(r => r['ยอดจากไฟล์แนบ_Hourly']), backgroundColor: '#16a34a' }
+        { label: 'ยอดจริงหลังซ่อม (รายชั่วโมง)', data: sub.map(r => r['ยอดจากไฟล์แนบ_Hourly']), backgroundColor: '#16a34a' }
       ]
     },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
   });
 }
 
-// ============================================================
-// AUTO-IMPORT DRAG & DROP (.xls / .xlsx / Raw_Hourly_Fact.csv)
-// ============================================================
-const dz = document.getElementById('dropZone');
-dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
-dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
-dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
-
-async function handleFiles(fileList) {
-  const logEl = document.getElementById('importLog');
-  logEl.style.display = 'block';
-  logEl.textContent = `กำลังอ่านไฟล์จำนวน ${fileList.length} ไฟล์...\n`;
-  let addedRows = 0;
-  const newMonths = new Set();
-
-  for (const file of fileList) {
-    try {
-      const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, { type: 'array' });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-
-      // Detect gate / lot (unify ป้อมทางออกพิเศษ into ลาน 2)
-      let lot = 'ลาน 2';
-      for (let i=0; i<Math.min(10, rows.length); i++) {
-        const s = String(rows[i][0] || '');
-        if (s.includes('ลานเหนือ') || file.name.includes(' 3.')) lot = 'ลาน 3';
-        else if (s.includes('ลานใต้') || s.includes('ป้อมทางออก') || s.includes('2-2') || file.name.includes(' 2.')) lot = 'ลาน 2';
-      }
-
-      // Parse transaction rows
-      const dailyAgg = {};
-      const hrAgg = {};
-      let fileCnt = 0;
-      for (const r of rows) {
-        if (typeof r[0] === 'number' && r[0] >= 1 && typeof r[1] === 'number' && r[1] > 20000) {
-          const tin = new Date((r[1] - 25569) * 86400 * 1000);
-          const tout = (typeof r[3] === 'number' && r[3] > 20000) ? new Date((r[3] - 25569) * 86400 * 1000) : tin;
-          const durMin = Math.max(0, (tout - tin) / 60000);
-          const plate = String(r[5] || '').trim();
-          const carType = plate.includes('-') ? 'รายวัน' : 'รายเดือน';
-          const y = tin.getUTCFullYear(), mo = String(tin.getUTCMonth()+1).padStart(2,'0'), da = String(tin.getUTCDate()).padStart(2,'0');
-          const dStr = `${y}-${mo}-${da}`, mStr = `${y}-${mo}`, hr = tin.getUTCHours();
-          const is15 = durMin <= 15 ? 1 : 0;
-          const isOv = tout.getUTCDate() !== tin.getUTCDate() ? 1 : 0;
-
-          newMonths.add(mStr);
-          const dk = `${mStr}|${lot}|${dStr}`;
-          if (!dailyAgg[dk]) dailyAgg[dk] = { entry_month: mStr, lot, entry_date: dStr, 'รายวัน':0, 'รายเดือน':0, 'รวมทั้งหมด':0, 'จอด_0_15_นาที':0, 'ค้างคืน_ออกวันถัดไป':0, patched_extra:0, 'หมายเหตุตรวจสอบ':'นำเข้าใหม่จากเว็บ' };
-          dailyAgg[dk][carType]++; dailyAgg[dk]['รวมทั้งหมด']++; dailyAgg[dk]['จอด_0_15_นาที'] += is15; dailyAgg[dk]['ค้างคืน_ออกวันถัดไป'] += isOv;
-
-          const hk = `${mStr}|${lot}|${hr}`;
-          if (!hrAgg[hk]) hrAgg[hk] = { entry_month: mStr, lot, entry_hour: hr, 'รายวัน':0, 'รายเดือน':0, 'รวม':0, s15:0, s15d:0, s15m:0, dates: new Set() };
-          hrAgg[hk][carType]++; hrAgg[hk]['รวม']++; hrAgg[hk].s15 += is15;
-          if (is15) hrAgg[hk][carType==='รายวัน'?'s15d':'s15m']++;
-          hrAgg[hk].dates.add(dStr);
-          fileCnt++;
-        }
-      }
-
-      // Merge into DATA (replace existing date+lot to prevent duplicates)
-      Object.values(dailyAgg).forEach(obj => {
-        const idx = DATA.daily_detail.findIndex(x => x.entry_date === obj.entry_date && x.lot === obj.lot);
-        if (idx >= 0) DATA.daily_detail[idx] = obj; else DATA.daily_detail.push(obj);
-      });
-      Object.values(hrAgg).forEach(obj => {
-        const nd = obj.dates.size || 1;
-        const hItem = { entry_month: obj.entry_month, lot: obj.lot, entry_hour: obj.entry_hour, 'รายวัน': obj['รายวัน'], 'รายเดือน': obj['รายเดือน'], 'รวม': obj['รวม'], n_days: nd, 'เฉลี่ยต่อวัน_รวม': +(obj['รวม']/nd).toFixed(1) };
-        const idx = DATA.hourly_entries.findIndex(x => x.entry_month===hItem.entry_month && x.lot===hItem.lot && x.entry_hour===hItem.entry_hour);
-        if (idx >= 0) {
-          DATA.hourly_entries[idx]['รายวัน'] += hItem['รายวัน'];
-          DATA.hourly_entries[idx]['รายเดือน'] += hItem['รายเดือน'];
-          DATA.hourly_entries[idx]['รวม'] += hItem['รวม'];
-          DATA.hourly_entries[idx].n_days += nd;
-          DATA.hourly_entries[idx]['เฉลี่ยต่อวัน_รวม'] = +(DATA.hourly_entries[idx]['รวม']/DATA.hourly_entries[idx].n_days).toFixed(1);
-        } else DATA.hourly_entries.push(hItem);
-
-        const sItem = { entry_month: obj.entry_month, lot: obj.lot, entry_hour: obj.entry_hour, 'รถเข้าทั้งหมด': obj['รวม'], 'จอด_0_15_รวม': obj.s15, 'จอด_0_15_รายวัน': obj.s15d, 'จอด_0_15_รายเดือน': obj.s15m, 'จอด_0_15_เฉลี่ยต่อวัน': +(obj.s15/nd).toFixed(1), 'สัดส่วน_0_15_pct': +(obj.s15/(obj['รวม']||1)*100).toFixed(2) };
-        DATA.short_stay_0_15.push(sItem);
-      });
-
-      addedRows += fileCnt;
-      logEl.textContent += `✅ ${file.name} (${lot}): นำเข้าสำเร็จ ${fmt(fileCnt)} รายการ\n`;
-    } catch (err) {
-      logEl.textContent += `❌ ${file.name}: ผิดพลาด (${err.message})\n`;
-    }
-  }
-
-  newMonths.forEach(m => { if (!DATA.meta.months.includes(m)) DATA.meta.months.push(m); });
-  DATA.meta.months.sort();
-  DATA.meta.total_records += addedRows;
-  initControls();
-  renderAll();
-  logEl.textContent += `\n🎉 อัปเดตกราฟและตารางทั้งหมดเรียบร้อย! (เพิ่มข้อมูลใหม่ ${fmt(addedRows)} รายการ)`;
-}
-
 function exportCurrentCSV() {
   const f = getFilters();
-  const rows = DATA.daily_detail.filter(r => (f.month==='ALL'||r.entry_month===f.month) && matchLot(r.lot, f.lot));
-  const hdr = ['เดือน','ลานจอดรถ','วันที่','รายวัน','รายเดือน','รวมทั้งหมด','เติมวันล่ม','จอด_0_15_นาที','ค้างคืน','หมายเหตุ'];
+  const rows = DATA.daily_detail.filter(r => inDateRange(r.entry_date, f) && matchLot(r.lot, f.lot));
+  const hdr = ['เดือน','ลานจอดรถ','วันที่','รายวัน','รายเดือน','รวมทั้งหมด','จอด_0_15_นาที','ค้างคืน','หมายเหตุ'];
   const lines = [hdr.join(',')];
-  rows.forEach(r => lines.push([r.entry_month,r.lot,r.entry_date,r['รายวัน'],r['รายเดือน'],r['รวมทั้งหมด'],r.patched_extra||0,r['จอด_0_15_นาที'],r['ค้างคืน_ออกวันถัดไป'],`"${r['หมายเหตุตรวจสอบ']||''}"`].join(',')));
+  rows.forEach(r => lines.push([r.entry_month,r.lot,r.entry_date,r['รายวัน']+(r.patched_extra||0),r['รายเดือน'],r['รวมทั้งหมด']+(r.patched_extra||0),r['จอด_0_15_นาที'],r['ค้างคืน_ออกวันถัดไป'],`"${r['หมายเหตุตรวจสอบ']||''}"`].join(',')));
   const blob = new Blob(['\uFEFF'+lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = `Parking_Export_${f.month}_${f.lot}.csv`; a.click();
+  a.download = `Parking_Export_${f.dFrom}_${f.dTo}.csv`; a.click();
 }
 
 fetch('./dashboard_data.json?v=' + Date.now())
   .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
   .then(json => { DATA = json; initControls(); renderAll(); })
-  .catch(err => {
-    document.getElementById('metaSubtitle').textContent = 'ไม่สามารถโหลด dashboard_data.json ได้ (' + err.message + ')';
-  });
+  .catch(err => alert('ไม่สามารถโหลดข้อมูลได้: ' + err.message));
 </script>
 </body>
 </html>
