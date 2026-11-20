@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin Import — นำเข้าข้อมูลลานจอดรถรายวัน</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --primary:#1e3a5f; --accent:#2563eb; --success:#16a34a; --danger:#dc2626; --warn:#d97706; --bg:#f1f5f9; --card:#fff; --border:#e2e8f0; --muted:#64748b; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Noto Sans Thai','Tahoma',sans-serif; background:var(--bg); color:#0f172a; line-height:1.55; }
+  header { background:linear-gradient(135deg,#0f294a,#1e4b7a); color:#fff; padding:18px 28px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
+  header h1 { font-size:1.3rem; }
+  header a { color:#fff; text-decoration:none; background:rgba(255,255,255,0.15); padding:7px 14px; border-radius:8px; font-size:0.88rem; font-weight:600; border:1px solid rgba(255,255,255,0.3); }
+  header a:hover { background:rgba(255,255,255,0.25); }
+  main { max-width:1100px; margin:24px auto; padding:0 18px 50px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:22px 24px; margin-bottom:20px; box-shadow:0 1px 4px rgba(0,0,0,0.04); }
+  .card h2 { font-size:1.08rem; color:var(--primary); margin-bottom:6px; display:flex; align-items:center; gap:8px; }
+  .desc { font-size:0.86rem; color:var(--muted); margin-bottom:14px; }
+  .step-badge { background:var(--primary); color:#fff; width:24px; height:24px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:700; }
+  .drop-zone { border:2px dashed #3b82f6; background:#eff6ff; border-radius:12px; padding:34px 20px; text-align:center; cursor:pointer; transition:all .2s; }
+  .drop-zone:hover, .drop-zone.dragover { background:#dbeafe; border-color:#1d4ed8; }
+  .row-flex { display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
+  input[type="password"], input[type="text"], select { padding:8px 12px; border:1px solid #cbd5e1; border-radius:8px; font-family:inherit; font-size:0.9rem; }
+  .btn { padding:10px 20px; border-radius:8px; border:none; font-family:inherit; font-size:0.92rem; font-weight:700; cursor:pointer; transition:all .15s; }
+  .btn-primary { background:var(--primary); color:#fff; }
+  .btn-primary:hover { background:#2b5c8f; }
+  .btn-success { background:var(--success); color:#fff; font-size:1rem; padding:12px 24px; }
+  .btn-success:hover { background:#15803d; }
+  .btn-success:disabled { background:#94a3b8; cursor:not-allowed; }
+  .btn-outline { background:#fff; color:var(--primary); border:1px solid var(--primary); }
+  table { width:100%; border-collapse:collapse; font-size:0.86rem; margin-top:12px; }
+  th, td { padding:9px 10px; border:1px solid var(--border); text-align:center; }
+  th { background:var(--primary); color:#fff; }
+  td:first-child { text-align:left; }
+  tr:nth-child(even) { background:#f8fafc; }
+  .pill { display:inline-block; padding:2px 10px; border-radius:999px; font-size:0.78rem; font-weight:700; }
+  .pill-ok { background:#dcfce7; color:#166534; }
+  .pill-warn { background:#fef3c7; color:#92400e; }
+  .pill-err { background:#fee2e2; color:#991b1b; }
+  #logBox { background:#0f172a; color:#e2e8f0; padding:14px; border-radius:8px; font-family:monospace; font-size:0.84rem; white-space:pre-wrap; max-height:240px; overflow-y:auto; margin-top:12px; }
+  .status-bar { display:flex; flex-wrap:wrap; gap:16px; background:#f8fafc; border:1px solid var(--border); padding:12px 16px; border-radius:8px; font-size:0.88rem; margin-bottom:16px; }
+  .status-bar strong { color:var(--primary); }
+  .help-box { background:#fffbeb; border:1px solid #fcd34d; border-radius:8px; padding:12px 14px; font-size:0.83rem; color:#78350f; margin-top:12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🛠️ ระบบนำเข้าข้อมูลรายวันสำหรับแอดมิน (Admin Import)</h1>
+    <div style="font-size:0.84rem;color:#cbd5e1">อัปโหลดไฟล์ .xls จากระบบลานจอดรถเพื่ออัปเดตหน้าเว็บ Dashboard ผู้บริหารอัตโนมัติ</div>
+  </div>
+  <a href="./index.html">← กลับหน้า Dashboard ผู้บริหาร</a>
+</header>
+
+<main>
+  <div class="status-bar" id="currentStatus">กำลังโหลดสถานะข้อมูลปัจจุบันจากหน้าเว็บ...</div>
+
+  <!-- STEP 1: DROP FILES -->
+  <div class="card">
+    <h2><span class="step-badge">1</span> เลือกหรือวางไฟล์ .xls ประจำวัน (ลาน 2, ลาน 3, ป้อมทางออกพิเศษ)</h2>
+    <div class="desc">เลือกได้พร้อมกันหลายไฟล์ (เช่น <code>19-11 2.xls</code>, <code>19-11 3.xls</code> หรืออัปโหลดทีละหลายวันก็ได้) ระบบจะรวม <strong>ลาน 2 + ป้อมทางออกพิเศษ</strong> และคัดแยก <strong>รายวัน/รายเดือน</strong> ให้โดยอัตโนมัติ</div>
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+      <div style="font-size:2.4rem">📂</div>
+      <div style="font-weight:700;color:var(--primary);margin-top:6px;font-size:1rem">คลิกเพื่อเลือกไฟล์ หรือ ลากไฟล์ .xls / .xlsx มาวางที่นี่</div>
+      <div style="font-size:0.83rem;color:var(--muted);margin-top:4px">ถ้าอัปโหลดวันที่ซ้ำ ระบบจะเขียนทับข้อมูลวันนั้นให้อย่างปลอดภัย ไม่เกิดยอดเบิ้ล</div>
+      <input type="file" id="fileInput" multiple accept=".xls,.xlsx" style="display:none" onchange="parseDroppedFiles(this.files)" />
+    </div>
+
+    <div id="previewArea" style="display:none;margin-top:16px">
+      <h3 style="font-size:0.95rem;color:var(--primary);margin-bottom:6px">📋 ตรวจสอบรายการไฟล์ที่อ่านได้ก่อนบันทึก:</h3>
+      <table>
+        <thead>
+          <tr><th>ชื่อไฟล์</th><th>วันที่ข้อมูล</th><th>ลานจอดรถ (ตรวจสอบ/แก้ได้)</th><th>รถรายวัน</th><th>รถรายเดือน</th><th>รวมทั้งหมด</th><th>0–15 นาที</th><th>สถานะ</th></tr>
+        </thead>
+        <tbody id="previewBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- STEP 2: GITHUB TOKEN & PUBLISH -->
+  <div class="card">
+    <h2><span class="step-badge">2</span> บันทึกและเผยแพร่ขึ้นหน้าเว็บผู้บริหาร</h2>
+    <div class="desc">ใส่รหัส <strong>GitHub Token</strong> เพียงครั้งแรกครั้งเดียว (ระบบจะจำไว้ในเบราว์เซอร์เครื่องแอดมินเท่านั้น ไม่ถูกส่งไปที่อื่น) จากนั้นวันต่อไปแค่ลากไฟล์แล้วกดปุ่มเขียวได้เลยครับ</div>
+
+    <div class="row-flex" style="margin-bottom:14px">
+      <label style="font-weight:600;font-size:0.88rem">GitHub Token (PAT):</label>
+      <input type="password" id="ghToken" placeholder="github_pat_xxxxxxxxxxxx" style="width:320px" />
+      <button class="btn btn-outline" onclick="saveToken()">💾 จำรหัสไว้ในเครื่องนี้</button>
+      <button class="btn btn-outline" style="color:var(--danger);border-color:var(--danger)" onclick="clearToken()">ล้างรหัส</button>
+      <span id="tokenStatus" style="font-size:0.84rem"></span>
+    </div>
+
+    <div class="row-flex">
+      <button class="btn btn-success" id="publishBtn" disabled onclick="publishToGitHub()">🚀 บันทึกและอัปเดตหน้าเว็บผู้บริหารทันที</button>
+      <button class="btn btn-outline" id="downloadJsonBtn" disabled onclick="downloadMergedJSON()">⬇️ ดาวน์โหลดไฟล์ dashboard_data.json (สำรอง)</button>
+    </div>
+
+    <div class="help-box">
+      <strong>วิธีสร้าง GitHub Token ให้แอดมิน (ทำครั้งเดียวใช้ได้ตลอด):</strong>
+      เข้า GitHub → มุมขวาบนรูปโปรไฟล์ → <strong>Settings</strong> → <strong>Developer settings</strong> → <strong>Personal access tokens</strong> → <strong>Fine-grained tokens</strong> → <strong>Generate new token</strong> →
+      เลือก Repository access เฉพาะ <code>parking-dashboard</code> → Permissions ตรง <strong>Contents</strong> เลือก <strong>Read and write</strong> → กด Generate แล้วคัดลอกรหัสมามอบให้แอดมินใส่ในช่องด้านบนครับ
+    </div>
+
+    <div id="logBox" style="display:none"></div>
+  </div>
+</main>
+
+<script>
+const REPO_OWNER = 'yingcharoen-hash';
+const REPO_NAME = 'parking-dashboard';
+const DATA_FILE = 'dashboard_data.json';
+
+let BASE_DATA = null;
+let PARSED_FILES = []; // array of parsed per-file transaction bundles
+
+function log(msg) {
+  const box = document.getElementById('logBox');
+  box.style.display = 'block';
+  box.textContent += `[${new Date().toLocaleTimeString('th-TH')}] ${msg}\n`;
+  box.scrollTop = box.scrollHeight;
+}
+function fmt(n) { return Number(n||0).toLocaleString('th-TH'); }
+
+// Load saved token & current dashboard_data.json
+window.addEventListener('DOMContentLoaded', async () => {
+  const saved = localStorage.getItem('parking_gh_token');
+  if (saved) {
+    document.getElementById('ghToken').value = saved;
+    document.getElementById('tokenStatus').innerHTML = '<span class="pill pill-ok">✓ มีรหัสบันทึกไว้แล้ว</span>';
+  }
+  try {
+    const r = await fetch('./dashboard_data.json?v=' + Date.now());
+    BASE_DATA = await r.json();
+    const dates = BASE_DATA.daily_detail.map(d => d.entry_date).sort();
+    document.getElementById('currentStatus').innerHTML = `
+      <div><strong>สถานะปัจจุบัน:</strong> ข้อมูลถึงวันที่ <strong>${dates[dates.length-1]}</strong></div>
+      <div><strong>จำนวนรถสะสม:</strong> ${fmt(BASE_DATA.meta.total_records)} คัน</div>
+      <div><strong>จำนวนเดือน:</strong> ${BASE_DATA.meta.months.length} เดือน (${BASE_DATA.meta.months[0]} – ${BASE_DATA.meta.months[BASE_DATA.meta.months.length-1]})</div>
+    `;
+  } catch (e) {
+    document.getElementById('currentStatus').innerHTML = `<span class="pill pill-err">ไม่สามารถโหลดข้อมูลปัจจุบันได้: ${e.message}</span>`;
+  }
+});
+
+function saveToken() {
+  const v = document.getElementById('ghToken').value.trim();
+  if (!v) return alert('กรุณากรอก GitHub Token ก่อนครับ');
+  localStorage.setItem('parking_gh_token', v);
+  document.getElementById('tokenStatus').innerHTML = '<span class="pill pill-ok">✓ บันทึกรหัสไว้ในเบราว์เซอร์นี้แล้ว</span>';
+}
+function clearToken() {
+  localStorage.removeItem('parking_gh_token');
+  document.getElementById('ghToken').value = '';
+  document.getElementById('tokenStatus').innerHTML = '<span class="pill pill-warn">ล้างรหัสแล้ว</span>';
+}
+
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('dragover'); parseDroppedFiles(e.dataTransfer.files); });
+
+function excelSerialToParts(serial) {
+  // Excel epoch 1899-12-30 (matches Python openpyxl/xlrd)
+  const ms = Math.round((serial - 25569) * 86400 * 1000);
+  const d = new Date(ms);
+  const yyyy = d.getUTCFullYear();
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(d.getUTCDate()).padStart(2, '0');
+  return { date: `${yyyy}-${mm}-${dd}`, month: `${yyyy}-${mm}`, hour: d.getUTCHours(), ms };
+}
+
+async function parseDroppedFiles(fileList) {
+  if (!fileList || !fileList.length) return;
+  PARSED_FILES = [];
+  log(`เริ่มอ่านไฟล์ทั้งหมด ${fileList.length} ไฟล์...`);
+
+  for (const file of fileList) {
+    try {
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+      // Detect lot robustly even without cp874 codepage:
+      // (4) or filename ending ' 3.xls' -> ลาน 3; (2), (5), '2-2', or ' 2.xls' -> ลาน 2
+      let lot = 'ลาน 2';
+      let booth = 'ป้อมหลัก';
+      for (let i = 0; i < Math.min(10, rows.length); i++) {
+        const s = String(rows[i][0] || '');
+        if (s.includes('(4)') || s.includes('ลานเหนือ')) { lot = 'ลาน 3'; booth = 'ลาน 3'; break; }
+        if (s.includes('(5)') || s.includes('2-2')) { lot = 'ลาน 2'; booth = 'ป้อมพิเศษ'; break; }
+        if (s.includes('(2)') || s.includes('ลานใต้')) { lot = 'ลาน 2'; booth = 'ป้อมหลัก'; break; }
+      }
+      if (file.name.match(/[\s_-]3\.xls/i)) { lot = 'ลาน 3'; booth = 'ลาน 3'; }
+
+      const txns = [];
+      const dateCounts = {};
+      for (const r of rows) {
+        if (typeof r[0] === 'number' && r[0] >= 1 && typeof r[1] === 'number' && r[1] > 20000) {
+          const tin = excelSerialToParts(r[1]);
+          const tout = (typeof r[3] === 'number' && r[3] > 20000) ? excelSerialToParts(r[3]) : tin;
+          const durMin = Math.max(0, (tout.ms - tin.ms) / 60000);
+          const plate = String(r[5] || '').trim();
+          const carType = plate.includes('-') ? 'รายวัน' : 'รายเดือน';
+          const lostCard = String(r[6] || '').trim().length > 0 ? 1 : 0;
+          dateCounts[tin.date] = (dateCounts[tin.date] || 0) + 1;
+          txns.push({ tin, tout, durMin, carType, lostCard });
+        }
+      }
+
+      const mainDate = Object.entries(dateCounts).sort((a,b) => b[1]-a[1])[0]?.[0] || 'ไม่พบวันที่';
+      const dailyCnt = txns.filter(t => t.carType === 'รายวัน').length;
+      const monthlyCnt = txns.filter(t => t.carType === 'รายเดือน').length;
+      const s15Cnt = txns.filter(t => t.durMin <= 15).length;
+
+      PARSED_FILES.push({ filename: file.name, date: mainDate, month: mainDate.slice(0,7), lot, booth, dailyCnt, monthlyCnt, total: txns.length, s15Cnt, txns });
+      log(`✅ ${file.name}: วันที่ ${mainDate} | ${lot} (${booth}) | ${fmt(txns.length)} คัน`);
+    } catch (err) {
+      log(`❌ ${file.name}: อ่านไฟล์ไม่สำเร็จ (${err.message})`);
+    }
+  }
+  renderPreview();
+}
+
+function renderPreview() {
+  const area = document.getElementById('previewArea');
+  const tbody = document.getElementById('previewBody');
+  if (!PARSED_FILES.length) { area.style.display = 'none'; return; }
+  area.style.display = 'block';
+  tbody.innerHTML = PARSED_FILES.map((f, idx) => `
+    <tr>
+      <td>${f.filename}</td>
+      <td><strong>${f.date}</strong></td>
+      <td>
+        <select onchange="PARSED_FILES[${idx}].lot = this.value">
+          <option value="ลาน 2" ${f.lot==='ลาน 2'?'selected':''}>ลาน 2 (${f.booth})</option>
+          <option value="ลาน 3" ${f.lot==='ลาน 3'?'selected':''}>ลาน 3</option>
+        </select>
+      </td>
+      <td>${fmt(f.dailyCnt)}</td>
+      <td>${fmt(f.monthlyCnt)}</td>
+      <td><strong>${fmt(f.total)}</strong></td>
+      <td>${fmt(f.s15Cnt)} (${(f.s15Cnt/(f.total||1)*100).toFixed(1)}%)</td>
+      <td><span class="pill ${f.total>0?'pill-ok':'pill-err'}">${f.total>0?'พร้อมบันทึก':'ไม่พบข้อมูล'}</span></td>
+    </tr>
+  `).join('');
+  const hasValid = PARSED_FILES.some(f => f.total > 0);
+  document.getElementById('publishBtn').disabled = !hasValid;
+  document.getElementById('downloadJsonBtn').disabled = !hasValid;
+}
+
+function buildMergedData() {
+  if (!BASE_DATA) throw new Error('ยังไม่ได้โหลดข้อมูลฐาน (dashboard_data.json)');
+  const merged = JSON.parse(JSON.stringify(BASE_DATA));
+
+  // Group all uploaded txns by (date, lot) — merges ลาน 2 + ป้อมพิเศษ on the same date automatically!
+  const byDateLot = {};
+  for (const pf of PARSED_FILES) {
+    if (!pf.total) continue;
+    const key = `${pf.date}|${pf.lot}`;
+    if (!byDateLot[key]) byDateLot[key] = { date: pf.date, month: pf.month, lot: pf.lot, txns: [] };
+    byDateLot[key].txns.push(...pf.txns);
+  }
+
+  const touchedMonths = new Set();
+  for (const grp of Object.values(byDateLot)) {
+    const { date, month, lot, txns } = grp;
+    touchedMonths.add(month);
+
+    // 1. Update daily_detail (replace existing date+lot so re-upload never duplicates!)
+    const dailyCnt = txns.filter(t => t.carType === 'รายวัน').length;
+    const monthlyCnt = txns.filter(t => t.carType === 'รายเดือน').length;
+    const s15Cnt = txns.filter(t => t.durMin <= 15).length;
+    const ovCnt = txns.filter(t => t.tout.date > t.tin.date).length;
+    const newDailyRow = {
+      entry_month: month, lot, entry_date: date,
+      'รายวัน': dailyCnt, 'รายเดือน': monthlyCnt, 'รวมทั้งหมด': txns.length,
+      'จอด_0_15_นาที': s15Cnt, 'ค้างคืน_ออกวันถัดไป': ovCnt,
+      patched_extra: 0, 'หมายเหตุตรวจสอบ': ''
+    };
+    const dIdx = merged.daily_detail.findIndex(r => r.entry_date === date && r.lot === lot);
+    const oldTotal = dIdx >= 0 ? merged.daily_detail[dIdx]['รวมทั้งหมด'] : 0;
+    if (dIdx >= 0) merged.daily_detail[dIdx] = newDailyRow;
+    else merged.daily_detail.push(newDailyRow);
+
+    // 2. Update hourly_entries & short_stay_0_15 & duration & occupancy incrementally for that month+lot
+    // Recompute month+lot day count after insert
+    const monthDays = new Set(merged.daily_detail.filter(r => r.entry_month === month && r.lot === lot).map(r => r.entry_date)).size || 1;
+    const isReplacingSameDay = dIdx >= 0;
+
+    for (let h = 0; h < 24; h++) {
+      const hTxns = txns.filter(t => t.tin.hour === h);
+      const hOut = txns.filter(t => t.tout.date === date && t.tout.hour === h);
+      const hD = hTxns.filter(t => t.carType === 'รายวัน').length;
+      const hM = hTxns.filter(t => t.carType === 'รายเดือน').length;
+      const h15 = hTxns.filter(t => t.durMin <= 15).length;
+      const h15D = hTxns.filter(t => t.durMin <= 15 && t.carType === 'รายวัน').length;
+      const h15M = hTxns.filter(t => t.durMin <= 15 && t.carType === 'รายเดือน').length;
+
+      // hourly_entries
+      let he = merged.hourly_entries.find(r => r.entry_month === month && r.lot === lot && r.entry_hour === h);
+      if (!he) {
+        he = { entry_month: month, lot, entry_hour: h, 'รายวัน': 0, 'รายเดือน': 0, 'รวม': 0, n_days: 0, 'เฉลี่ยต่อวัน_รวม': 0 };
+        merged.hourly_entries.push(he);
+      }
+      if (!isReplacingSameDay) {
+        he['รายวัน'] += hD; he['รายเดือน'] += hM; he['รวม'] += hTxns.length;
+      }
+      he.n_days = monthDays;
+      he['เฉลี่ยต่อวัน_รวม'] = +(he['รวม'] / monthDays).toFixed(1);
+
+      // short_stay_0_15
+      let s15 = merged.short_stay_0_15.find(r => r.entry_month === month && r.lot === lot && r.entry_hour === h);
+      if (!s15) {
+        s15 = { entry_month: month, lot, entry_hour: h, 'รถเข้าทั้งหมด': 0, 'จอด_0_15_รวม': 0, 'จอด_0_15_รายวัน': 0, 'จอด_0_15_รายเดือน': 0, 'จอด_0_15_เฉลี่ยต่อวัน': 0, 'สัดส่วน_0_15_pct': 0 };
+        merged.short_stay_0_15.push(s15);
+      }
+      if (!isReplacingSameDay) {
+        s15['รถเข้าทั้งหมด'] += hTxns.length; s15['จอด_0_15_รวม'] += h15;
+        s15['จอด_0_15_รายวัน'] += h15D; s15['จอด_0_15_รายเดือน'] += h15M;
+      }
+      s15['จอด_0_15_เฉลี่ยต่อวัน'] = +(s15['จอด_0_15_รวม'] / monthDays).toFixed(1);
+      s15['สัดส่วน_0_15_pct'] = +(s15['จอด_0_15_รวม'] / (s15['รถเข้าทั้งหมด'] || 1) * 100).toFixed(2);
+
+      // hourly_occupancy (rolling average update for newly added day)
+      const endMs = new Date(`${date}T${String(h).padStart(2,'0')}:59:59Z`).getTime();
+      const occD = txns.filter(t => t.carType === 'รายวัน' && t.tin.ms <= endMs && t.tout.ms > endMs).length;
+      const occM = txns.filter(t => t.carType === 'รายเดือน' && t.tin.ms <= endMs && t.tout.ms > endMs).length;
+      const occTot = occD + occM;
+      let ho = merged.hourly_occupancy.find(r => r.month === month && r.lot === lot && r.hour === h);
+      if (!ho) {
+        ho = { month, lot, hour: h, 'เข้า_รวม_เฉลี่ย': hTxns.length, 'ออก_รวม_เฉลี่ย': hOut.length, 'จอดสะสม_รายวัน_เฉลี่ย': occD, 'จอดสะสม_รายเดือน_เฉลี่ย': occM, 'จอดสะสม_รวม_เฉลี่ย': occTot, 'จอดสะสม_รวม_สูงสุด_Peak': occTot };
+        merged.hourly_occupancy.push(ho);
+      } else if (!isReplacingSameDay) {
+        const prevN = Math.max(1, monthDays - 1);
+        ho['เข้า_รวม_เฉลี่ย'] = +((ho['เข้า_รวม_เฉลี่ย']*prevN + hTxns.length)/monthDays).toFixed(1);
+        ho['ออก_รวม_เฉลี่ย'] = +((ho['ออก_รวม_เฉลี่ย']*prevN + hOut.length)/monthDays).toFixed(1);
+        ho['จอดสะสม_รายวัน_เฉลี่ย'] = +((ho['จอดสะสม_รายวัน_เฉลี่ย']*prevN + occD)/monthDays).toFixed(1);
+        ho['จอดสะสม_รายเดือน_เฉลี่ย'] = +((ho['จอดสะสม_รายเดือน_เฉลี่ย']*prevN + occM)/monthDays).toFixed(1);
+        ho['จอดสะสม_รวม_เฉลี่ย'] = +((ho['จอดสะสม_รวม_เฉลี่ย']*prevN + occTot)/monthDays).toFixed(1);
+        if (occTot > ho['จอดสะสม_รวม_สูงสุด_Peak']) ho['จอดสะสม_รวม_สูงสุด_Peak'] = occTot;
+      }
+    }
+
+    // 3. Update duration buckets & weighted average
+    const bucketDefs = [
+      ['0-15 นาที', 0, 15], ['15-30 นาที', 15, 30], ['30-60 นาที', 30, 60],
+      ['1-2 ชม.', 60, 120], ['2-4 ชม.', 120, 240], ['4-8 ชม.', 240, 480],
+      ['8-24 ชม.', 480, 1440], ['>24 ชม.', 1440, 1e9]
+    ];
+    for (const ct of ['รายวัน', 'รายเดือน']) {
+      const cTxns = txns.filter(t => t.carType === ct);
+      if (!cTxns.length) continue;
+      const durs = cTxns.map(t => t.durMin).sort((a,b) => a-b);
+      const meanD = durs.reduce((s,v)=>s+v,0) / durs.length;
+      const medD = durs[Math.floor(durs.length/2)];
+      const p90D = durs[Math.floor(durs.length*0.9)];
+
+      let dr = merged.duration.find(r => r.entry_month === month && r.lot === lot && r.car_type === ct);
+      if (!dr) {
+        dr = { entry_month: month, lot, car_type: ct, 'จำนวนรถ': 0, 'เฉลี่ย_นาที': meanD, 'มัธยฐาน_นาที': medD, 'P75_นาที': medD, 'P90_นาที': p90D, 'ต่ำสุด_นาที': durs[0], 'สูงสุด_นาที': durs[durs.length-1] };
+        bucketDefs.forEach(b => dr[b[0]] = 0);
+        merged.duration.push(dr);
+      }
+      if (!isReplacingSameDay) {
+        const oldN = dr['จำนวนรถ'];
+        const newN = oldN + cTxns.length;
+        dr['เฉลี่ย_นาที'] = +((dr['เฉลี่ย_นาที']*oldN + meanD*cTxns.length)/newN).toFixed(2);
+        dr['มัธยฐาน_นาที'] = +((dr['มัธยฐาน_นาที']*oldN + medD*cTxns.length)/newN).toFixed(2);
+        dr['P90_นาที'] = +((dr['P90_นาที']*oldN + p90D*cTxns.length)/newN).toFixed(2);
+        dr['จำนวนรถ'] = newN;
+        cTxns.forEach(t => {
+          for (const [lbl, lo, hi] of bucketDefs) {
+            if (t.durMin >= lo && t.durMin <= hi) { dr[lbl] = (dr[lbl]||0) + 1; break; }
+          }
+        });
+      }
+    }
+
+    // 4. Update pre_midnight summary
+    const ovD = txns.filter(t => t.carType === 'รายวัน' && t.tout.date > t.tin.date).length;
+    const ovM = txns.filter(t => t.carType === 'รายเดือน' && t.tout.date > t.tin.date).length;
+    let pm = merged.pre_midnight.find(r => r['เดือน'] === month && r['ลานจอดรถ'] === lot);
+    if (!pm) {
+      pm = { 'เดือน': month, 'ลานจอดรถ': lot, 'จำนวนวัน': 1, 'ค้างก่อนเที่ยงคืน_รายวัน_เฉลี่ย': ovD, 'ค้างก่อนเที่ยงคืน_รายเดือน_เฉลี่ย': ovM, 'ค้างก่อนเที่ยงคืน_รวม_เฉลี่ย': ovD+ovM, 'ค้างก่อนเที่ยงคืน_รวม_สูงสุด': ovD+ovM, 'ค้างก่อนเที่ยงคืน_รวม_ต่ำสุด': ovD+ovM, 'ค้างก่อนเที่ยงคืน_สะสมทั้งเดือน': ovD+ovM };
+      merged.pre_midnight.push(pm);
+    } else if (!isReplacingSameDay) {
+      const prevN = Math.max(1, monthDays - 1);
+      pm['จำนวนวัน'] = monthDays;
+      pm['ค้างก่อนเที่ยงคืน_รายวัน_เฉลี่ย'] = +((pm['ค้างก่อนเที่ยงคืน_รายวัน_เฉลี่ย']*prevN + ovD)/monthDays).toFixed(1);
+      pm['ค้างก่อนเที่ยงคืน_รายเดือน_เฉลี่ย'] = +((pm['ค้างก่อนเที่ยงคืน_รายเดือน_เฉลี่ย']*prevN + ovM)/monthDays).toFixed(1);
+      pm['ค้างก่อนเที่ยงคืน_รวม_เฉลี่ย'] = +((pm['ค้างก่อนเที่ยงคืน_รวม_เฉลี่ย']*prevN + ovD + ovM)/monthDays).toFixed(1);
+      pm['ค้างก่อนเที่ยงคืน_รวม_สูงสุด'] = Math.max(pm['ค้างก่อนเที่ยงคืน_รวม_สูงสุด'], ovD + ovM);
+      pm['ค้างก่อนเที่ยงคืน_สะสมทั้งเดือน'] += (ovD + ovM);
+    }
+
+    merged.meta.total_records += (txns.length - oldTotal);
+  }
+
+  touchedMonths.forEach(m => { if (!merged.meta.months.includes(m)) merged.meta.months.push(m); });
+  merged.meta.months.sort();
+  merged.meta.generated_at = new Date().toISOString().slice(0, 10);
+  merged.daily_detail.sort((a,b) => a.entry_date.localeCompare(b.entry_date) || a.lot.localeCompare(b.lot));
+  return merged;
+}
+
+function downloadMergedJSON() {
+  const merged = buildMergedData();
+  const blob = new Blob([JSON.stringify(merged)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'dashboard_data.json'; a.click();
+  log('⬇️ ดาวน์โหลดไฟล์ dashboard_data.json สำเร็จ');
+}
+
+// UTF-8 safe base64 encoder for large JSON
+function utf8ToBase64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
+async function publishToGitHub() {
+  const token = document.getElementById('ghToken').value.trim();
+  if (!token) { alert('กรุณากรอก GitHub Token ในขั้นตอนที่ 2 ก่อนกดบันทึกครับ'); return; }
+
+  const btn = document.getElementById('publishBtn');
+  btn.disabled = true; btn.textContent = '⏳ กำลังบันทึกและอัปเดตหน้าเว็บ...';
+
+  try {
+    const merged = buildMergedData();
+    const datesAdded = [...new Set(PARSED_FILES.map(f => f.date))].sort().join(', ');
+    log(`กำลังดึง SHA ล่าสุดของ ${DATA_FILE} จาก GitHub...`);
+
+    const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${DATA_FILE}`;
+    const getRes = await fetch(apiUrl, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' } });
+    if (!getRes.ok) throw new Error(`ตรวจสอบสิทธิ์ไม่ผ่าน (HTTP ${getRes.status}) — กรุณาเช็ก GitHub Token`);
+    const meta = await getRes.json();
+
+    log(`กำลังอัปโหลด dashboard_data.json ฉบับอัปเดต (วันที่: ${datesAdded})...`);
+    const contentB64 = utf8ToBase64(JSON.stringify(merged));
+    const putRes = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: `Admin daily import: ${datesAdded}`,
+        content: contentB64,
+        sha: meta.sha,
+        branch: 'main'
+      })
+    });
+    if (!putRes.ok) {
+      const errTxt = await putRes.text();
+      throw new Error(`บันทึกไม่สำเร็จ (HTTP ${putRes.status}): ${errTxt.slice(0,200)}`);
+    }
+
+    BASE_DATA = merged;
+    log(`🎉 บันทึกสำเร็จแล้ว! หน้าเว็บผู้บริหารจะแสดงข้อมูลใหม่ภายใน ~30-60 วินาที`);
+    alert(`✅ อัปเดตข้อมูลวันที่ ${datesAdded} เรียบร้อยแล้ว!\nหน้าเว็บผู้บริหารจะแสดงกราฟล่าสุดภายในประมาณ 1 นาทีครับ`);
+  } catch (err) {
+    log(`❌ เกิดข้อผิดพลาด: ${err.message}`);
+    alert('เกิดข้อผิดพลาด: ' + err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '🚀 บันทึกและอัปเดตหน้าเว็บผู้บริหารทันที';
+  }
+}
+</script>
+</body>
+</html>
