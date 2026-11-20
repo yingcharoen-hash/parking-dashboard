@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>รายงานและวิเคราะห์ข้อมูลลานจอดรถ 2026</title>
+<title>ระบบรายงานและวิเคราะห์ข้อมูลลานจอดรถ</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -138,7 +138,7 @@
 <header>
   <div class="header-top">
     <div>
-      <h1>📊 ระบบรายงานและวิเคราะห์ข้อมูลลานจอดรถ 2026</h1>
+      <h1>📊 ระบบรายงานและวิเคราะห์ข้อมูลลานจอดรถ</h1>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <a href="./admin.html" class="btn btn-outline">🛠️ หน้าแอดมินนำเข้าไฟล์รายวัน</a>
@@ -172,8 +172,8 @@
     <label for="typeFilter">ประเภทรถ:</label>
     <select id="typeFilter" onchange="renderAll()">
       <option value="ALL">ทุกประเภท (รายวัน+รายเดือน)</option>
-      <option value="รายวัน">รถรายวัน (มีขีดกลาง)</option>
-      <option value="รายเดือน">รถรายเดือน (ไม่มีขีดกลาง)</option>
+      <option value="รายวัน">รถรายวัน</option>
+      <option value="รายเดือน">รถรายเดือน</option>
     </select>
   </div>
   <div class="ctrl-group" style="margin-left:auto">
@@ -212,7 +212,7 @@
           <h2>จำนวนรถเข้ารายเดือน แยกรถรายวัน vs รถรายเดือน</h2>
           <button class="btn-png" onclick="downloadChartPNG('cMonthlyType','02_รถเข้ารายเดือน_รายวันvsรายเดือน')">📷 บันทึกรูป PNG</button>
         </div>
-        <div class="desc">เกณฑ์จำแนก: ทะเบียนมีขีดกลาง (-) = รายวัน | ไม่มีขีดกลาง = รายเดือน</div>
+        <div class="desc">เปรียบเทียบปริมาณรถลูกค้ารายวันและรถสมาชิกรายเดือนในแต่ละเดือน</div>
         <div class="chart-wrap"><canvas id="cMonthlyType"></canvas></div>
       </div>
     </div>
@@ -378,19 +378,10 @@
       </div>
       <div class="card">
         <div class="card-hdr">
-          <h2>สรุปประเด็นสำคัญและข้อเสนอแนะสำหรับนำเสนอผู้บริหาร</h2>
+          <h2>สรุปประเด็นสำคัญและข้อเสนอแนะ (อัปเดตอัตโนมัติตามข้อมูลล่าสุด)</h2>
         </div>
-        <div class="table-scroll" style="max-height:360px">
-          <table>
-            <thead><tr><th style="width:26%">ประเด็นตรวจสอบ</th><th style="width:42%">ข้อค้นพบจากข้อมูล</th><th style="width:32%">ข้อเสนอแนะ</th></tr></thead>
-            <tbody>
-              <tr><td><strong>ยอดรถลดลงเดือน ก.ย.</strong></td><td>1–24 ก.ย. ยอดปกติ (~6,429 คัน/วัน) แต่ 26–30 ก.ย. ร่วงพร้อมกันทั้ง 2 ลานถึง -75% และฟื้นกลับเป็น 6,395 คัน/วันใน พ.ย.</td><td>ตรวจสอบเหตุการณ์หน้างานช่วง 25 ก.ย.–1 ต.ค. และเทียบ Log ฝั่งทางเข้า</td></tr>
-              <tr><td><strong>ลาน 3 เต็มเกินความจุ 82 คัน</strong></td><td>ช่วง 08:00–14:00 น. จอดสะสมเฉลี่ย 84–89 คัน (108.7%) สูงสุด 143 คัน</td><td>สอดคล้องกับรถจอด 0–15 นาทีลาน 3 ที่สูง 17–18% แนะนำป้ายบอกช่องว่าง Real-time ระบายไปลาน 2</td></tr>
-              <tr><td><strong>รถค้างก่อนเที่ยงคืน & บัตรหาย</strong></td><td>รถค้างก่อนเที่ยงคืนเพิ่มจาก ~69 คัน/วัน (ครึ่งปีแรก) เป็น 78–84 คัน/วัน (ก.ค.–พ.ย.)</td><td>ตรวจสอบรถค้างคืนและทะเบียนกลุ่มที่เข้าออกถี่ผิดปกติ</td></tr>
-              <tr><td><strong>การตรวจสอบความถูกต้อง</strong></td><td>ตัดไฟล์เดือน ก.พ. ที่ซ้ำในโฟลเดอร์ 01 (56 ไฟล์) และซ่อมยอด 3 วันระบบล่มเรียบร้อย</td><td>ควรเทียบ Log ทางเข้า (Gate-In) กับทางออก (Gate-Out) เพื่อตรวจจับรถหลุดได้สมบูรณ์</td></tr>
-            </tbody>
-          </table>
-        </div>
+        <div class="desc">ระบบตรวจจับและสะสมประเด็นสำคัญอัตโนมัติทุกครั้งที่มีการนำเข้าข้อมูลใหม่</div>
+        <div class="table-scroll" style="max-height:360px" id="dynamicAuditTable"></div>
       </div>
     </div>
   </section>
@@ -508,6 +499,7 @@ function renderAll() {
   renderTab4(f);
   renderTab5(f);
   renderOutageChart();
+  renderDynamicAudit(f);
 }
 
 function renderTab1(f) {
@@ -556,9 +548,9 @@ function renderTab1(f) {
       <div class="kpi-sub">รายวัน ${fmt(totDaily/nDays, 1)} | รายเดือน ${fmt(totMonthly/nDays, 1)}</div>
     </div>
     <div class="kpi-card orange">
-      <div class="kpi-label">สัดส่วนรถรายเดือน</div>
-      <div class="kpi-value">${fmt(pctMonthly, 2)}%</div>
-      <div class="kpi-sub">รายเดือน ${fmt(totMonthly)} คัน | รายวัน ${fmt(totDaily)} คัน</div>
+      <div class="kpi-label">สัดส่วน รายวัน : รายเดือน</div>
+      <div class="kpi-value">${fmt(100 - pctMonthly, 1)}% : ${fmt(pctMonthly, 1)}%</div>
+      <div class="kpi-sub">รายวัน ${fmt(totDaily)} คัน | รายเดือน ${fmt(totMonthly)} คัน</div>
     </div>
     <div class="kpi-card purple">
       <div class="kpi-label">เวลาจอดเฉลี่ย</div>
@@ -614,8 +606,8 @@ function renderTab1(f) {
     data: {
       labels: months,
       datasets: [
-        { label: 'รถรายวัน (มีขีดกลาง)', data: dailyArr, backgroundColor: '#2b5c8f' },
-        { label: 'รถรายเดือน (ไม่มีขีดกลาง)', data: monthlyArr, backgroundColor: '#16a34a' }
+        { label: 'รถรายวัน', data: dailyArr, backgroundColor: '#2b5c8f' },
+        { label: 'รถรายเดือน', data: monthlyArr, backgroundColor: '#16a34a' }
       ]
     },
     options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } }, plugins: { legend: { position: 'bottom' } } }
@@ -901,6 +893,99 @@ function renderOutageChart() {
     },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
   });
+}
+
+function renderDynamicAudit(f) {
+  const rows = [];
+  // 1. Auto-detect abnormally low traffic days (< 55% of overall daily avg) across ALL dates in range
+  const dayTotals = {};
+  DATA.daily_detail.filter(r => inDateRange(r.entry_date, f)).forEach(r => {
+    dayTotals[r.entry_date] = (dayTotals[r.entry_date] || 0) + r['รวมทั้งหมด'] + (r.patched_extra || 0);
+  });
+  const allVals = Object.values(dayTotals);
+  const meanAll = allVals.reduce((s,v)=>s+v, 0) / (allVals.length || 1);
+  const lowDays = Object.entries(dayTotals)
+    .filter(([d, v]) => v < meanAll * 0.58)
+    .sort((a,b) => a[0].localeCompare(b[0]));
+
+  if (lowDays.length > 0) {
+    const listTxt = lowDays.map(([d, v]) => `${d} (${fmt(v)} คัน)`).join(', ');
+    rows.push({
+      topic: `พบวันยอดรถต่ำกว่าปกติ (${lowDays.length} วัน)`,
+      finding: `ค่าเฉลี่ยรวม ${fmt(meanAll,0)} คัน/วัน แต่พบวันที่ยอดต่ำกว่าเกณฑ์ (<58%): ${listTxt}`,
+      rec: 'ตรวจสอบเหตุการณ์หน้างานในวันดังกล่าว และเทียบ Log ทางเข้า (Gate-In) กับทางออก (Gate-Out)'
+    });
+  }
+
+  // 2. Latest month trend vs previous month
+  const ms = DATA.meta.months.filter(m => inMonthRange(m, f));
+  if (ms.length >= 2) {
+    const lastM = ms[ms.length - 1], prevM = ms[ms.length - 2];
+    const calcAvg = m => {
+      const dm = {};
+      DATA.daily_detail.filter(r => r.entry_month === m).forEach(r => {
+        dm[r.entry_date] = (dm[r.entry_date] || 0) + r['รวมทั้งหมด'] + (r.patched_extra || 0);
+      });
+      const vs = Object.values(dm);
+      return { avg: vs.reduce((s,v)=>s+v,0)/(vs.length||1), days: vs.length };
+    };
+    const cur = calcAvg(lastM), prv = calcAvg(prevM);
+    const pctDiff = ((cur.avg - prv.avg) / (prv.avg || 1) * 100);
+    rows.push({
+      topic: `แนวโน้มเดือนล่าสุด (${lastM})`,
+      finding: `เฉลี่ย ${fmt(cur.avg,1)} คัน/วัน (${cur.days} วัน) เทียบเดือน ${prevM} (${fmt(prv.avg,1)} คัน/วัน) เปลี่ยนแปลง ${pctDiff>=0?'+':''}${pctDiff.toFixed(1)}%`,
+      rec: pctDiff >= 0 ? 'ปริมาณรถฟื้นตัว/เติบโตต่อเนื่อง ควรติดตามความหนาแน่นช่วงชั่วโมงพีค' : 'ปริมาณรถลดลงจากเดือนก่อน ควรตรวจสอบสาเหตุและแนวโน้มรายสัปดาห์'
+    });
+  }
+
+  // 3. Auto-detect over-capacity hours against live capacity inputs (capL2 / capL3)
+  for (const [lt, cap] of [['ลาน 2', f.capL2], ['ลาน 3', f.capL3]]) {
+    const overHrs = [];
+    let maxAvg = 0, maxPeak = 0;
+    for (let h = 0; h < 24; h++) {
+      const sub = DATA.hourly_occupancy.filter(r => inMonthRange(r.month, f) && r.lot === lt && r.hour === h);
+      if (!sub.length) continue;
+      const avgO = sub.reduce((s,r)=>s+r['จอดสะสม_รวม_เฉลี่ย'],0) / sub.length;
+      const pkO = Math.max(...sub.map(r=>r['จอดสะสม_รวม_สูงสุด_Peak']));
+      if (avgO > maxAvg) maxAvg = avgO;
+      if (pkO > maxPeak) maxPeak = pkO;
+      if (avgO >= cap) overHrs.push(`${String(h).padStart(2,'0')}:00`);
+    }
+    if (overHrs.length > 0 || maxPeak > cap) {
+      rows.push({
+        topic: `ความหนาแน่นเทียบความจุ ${lt} (${cap} คัน)`,
+        finding: overHrs.length > 0
+          ? `รถจอดสะสมเฉลี่ยเกินความจุช่วง ${overHrs[0]}–${overHrs[overHrs.length-1]} น. (เฉลี่ยพีค ${fmt(maxAvg,1)} คัน = ${(maxAvg/cap*100).toFixed(1)}%, สูงสุด ${fmt(maxPeak)} คัน)`
+          : `วันปกติยังไม่เกินความจุ (เฉลี่ยพีค ${fmt(maxAvg,1)} คัน = ${(maxAvg/cap*100).toFixed(1)}%) แต่ช่วงวันพีคจัดเกินความจุที่ ${fmt(maxPeak)} คัน`,
+        rec: lt === 'ลาน 3'
+          ? 'สอดคล้องกับอัตรารถจอด 0–15 นาทีที่สูง (วนหาที่จอดไม่ได้แล้วออก) แนะนำป้ายแสดงช่องว่าง Real-time เพื่อระบายรถไปลาน 2'
+          : 'เตรียมเปิดป้อมทางออกพิเศษและจัดเจ้าหน้าที่ระบายรถในวันพีคช่วง 10:00–15:00 น.'
+      });
+    }
+  }
+
+  // 4. Pre-midnight parked & 0-15 min live summary
+  const s15L2 = DATA.short_stay_0_15.filter(r => inMonthRange(r.entry_month, f) && r.lot==='ลาน 2');
+  const s15L3 = DATA.short_stay_0_15.filter(r => inMonthRange(r.entry_month, f) && r.lot==='ลาน 3');
+  const p15L2 = s15L2.reduce((s,r)=>s+r['จอด_0_15_รวม'],0) / (s15L2.reduce((s,r)=>s+r['รถเข้าทั้งหมด'],0)||1) * 100;
+  const p15L3 = s15L3.reduce((s,r)=>s+r['จอด_0_15_รวม'],0) / (s15L3.reduce((s,r)=>s+r['รถเข้าทั้งหมด'],0)||1) * 100;
+  const pmRows = DATA.pre_midnight.filter(r => inMonthRange(r['เดือน'], f));
+  const pmByMonth = {};
+  pmRows.forEach(r => { pmByMonth[r['เดือน']] = (pmByMonth[r['เดือน']]||0) + r['ค้างก่อนเที่ยงคืน_รวม_เฉลี่ย']; });
+  const pmVals = Object.values(pmByMonth);
+  const pmAvg = pmVals.reduce((s,v)=>s+v,0) / (pmVals.length||1);
+  rows.push({
+    topic: 'รถจอด 0–15 นาที & รถค้างก่อนเที่ยงคืน',
+    finding: `สัดส่วนจอด 0–15 นาที: ลาน 2 = ${p15L2.toFixed(1)}% | ลาน 3 = ${p15L3.toFixed(1)}% และรถจอดค้างก่อนเที่ยงคืนเฉลี่ยรวม ${fmt(pmAvg,1)} คัน/วัน`,
+    rec: 'เฝ้าระวังรถจอดค้างคืนต่อเนื่อง และตรวจสอบรถจอดสั้นช่วงเย็น 17:00–19:00 น. ที่ลาน 3'
+  });
+
+  let html = '<table><thead><tr><th style="width:26%">ประเด็นที่ตรวจพบ</th><th style="width:42%">รายละเอียดจากข้อมูลล่าสุด</th><th style="width:32%">ข้อเสนอแนะ</th></tr></thead><tbody>';
+  rows.forEach(r => {
+    html += `<tr><td><strong>${r.topic}</strong></td><td>${r.finding}</td><td>${r.rec}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('dynamicAuditTable').innerHTML = html;
 }
 
 function exportCurrentCSV() {

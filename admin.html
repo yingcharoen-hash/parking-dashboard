@@ -49,10 +49,10 @@
 
 <header>
   <div>
-    <h1>🛠️ ระบบนำเข้าข้อมูลรายวันสำหรับแอดมิน (Admin Import)</h1>
-    <div style="font-size:0.84rem;color:#cbd5e1">อัปโหลดไฟล์ .xls จากระบบลานจอดรถเพื่ออัปเดตหน้าเว็บ Dashboard ผู้บริหารอัตโนมัติ</div>
+    <h1>🛠️ ระบบนำเข้าข้อมูลรายวันสำหรับแอดมิน</h1>
+    <div style="font-size:0.84rem;color:#cbd5e1">อัปโหลดไฟล์ .xls จากระบบลานจอดรถเพื่ออัปเดตหน้าเว็บ Dashboard อัตโนมัติ</div>
   </div>
-  <a href="./index.html">← กลับหน้า Dashboard ผู้บริหาร</a>
+  <a href="./index.html">← กลับหน้า Dashboard</a>
 </header>
 
 <main>
@@ -82,26 +82,20 @@
 
   <!-- STEP 2: GITHUB TOKEN & PUBLISH -->
   <div class="card">
-    <h2><span class="step-badge">2</span> บันทึกและเผยแพร่ขึ้นหน้าเว็บผู้บริหาร</h2>
-    <div class="desc">ใส่รหัส <strong>GitHub Token</strong> เพียงครั้งแรกครั้งเดียว (ระบบจะจำไว้ในเบราว์เซอร์เครื่องแอดมินเท่านั้น ไม่ถูกส่งไปที่อื่น) จากนั้นวันต่อไปแค่ลากไฟล์แล้วกดปุ่มเขียวได้เลยครับ</div>
+    <h2><span class="step-badge">2</span> บันทึกและเผยแพร่ขึ้นหน้าเว็บ</h2>
+    <div class="desc">ใส่รหัส <strong>Token</strong> เพียงครั้งแรกครั้งเดียว (ระบบจะจำไว้ในเบราว์เซอร์เครื่องนี้เท่านั้น) จากนั้นวันต่อไปแค่ลากไฟล์แล้วกดปุ่มเขียวได้เลยครับ</div>
 
     <div class="row-flex" style="margin-bottom:14px">
-      <label style="font-weight:600;font-size:0.88rem">GitHub Token (PAT):</label>
-      <input type="password" id="ghToken" placeholder="github_pat_xxxxxxxxxxxx" style="width:320px" />
+      <label style="font-weight:600;font-size:0.88rem">Access Token:</label>
+      <input type="password" id="ghToken" placeholder="วางรหัส Token ที่นี่" style="width:320px" />
       <button class="btn btn-outline" onclick="saveToken()">💾 จำรหัสไว้ในเครื่องนี้</button>
       <button class="btn btn-outline" style="color:var(--danger);border-color:var(--danger)" onclick="clearToken()">ล้างรหัส</button>
       <span id="tokenStatus" style="font-size:0.84rem"></span>
     </div>
 
     <div class="row-flex">
-      <button class="btn btn-success" id="publishBtn" disabled onclick="publishToGitHub()">🚀 บันทึกและอัปเดตหน้าเว็บผู้บริหารทันที</button>
+      <button class="btn btn-success" id="publishBtn" disabled onclick="publishToGitHub()">🚀 บันทึกและอัปเดตหน้าเว็บทันที</button>
       <button class="btn btn-outline" id="downloadJsonBtn" disabled onclick="downloadMergedJSON()">⬇️ ดาวน์โหลดไฟล์ dashboard_data.json (สำรอง)</button>
-    </div>
-
-    <div class="help-box">
-      <strong>วิธีสร้าง GitHub Token ให้แอดมิน (ทำครั้งเดียวใช้ได้ตลอด):</strong>
-      เข้า GitHub → มุมขวาบนรูปโปรไฟล์ → <strong>Settings</strong> → <strong>Developer settings</strong> → <strong>Personal access tokens</strong> → <strong>Fine-grained tokens</strong> → <strong>Generate new token</strong> →
-      เลือก Repository access เฉพาะ <code>parking-dashboard</code> → Permissions ตรง <strong>Contents</strong> เลือก <strong>Read and write</strong> → กด Generate แล้วคัดลอกรหัสมามอบให้แอดมินใส่ในช่องด้านบนครับ
     </div>
 
     <div id="logBox" style="display:none"></div>
@@ -461,13 +455,13 @@ async function publishToGitHub() {
     }
 
     BASE_DATA = merged;
-    log(`🎉 บันทึกสำเร็จแล้ว! หน้าเว็บผู้บริหารจะแสดงข้อมูลใหม่ภายใน ~30-60 วินาที`);
-    alert(`✅ อัปเดตข้อมูลวันที่ ${datesAdded} เรียบร้อยแล้ว!\nหน้าเว็บผู้บริหารจะแสดงกราฟล่าสุดภายในประมาณ 1 นาทีครับ`);
+    log(`🎉 บันทึกสำเร็จแล้ว! หน้าเว็บ Dashboard จะแสดงข้อมูลใหม่ภายใน ~30-60 วินาที`);
+    alert(`✅ อัปเดตข้อมูลวันที่ ${datesAdded} เรียบร้อยแล้ว!\nหน้าเว็บ Dashboard จะแสดงกราฟล่าสุดภายในประมาณ 1 นาทีครับ`);
   } catch (err) {
     log(`❌ เกิดข้อผิดพลาด: ${err.message}`);
     alert('เกิดข้อผิดพลาด: ' + err.message);
   } finally {
-    btn.disabled = false; btn.textContent = '🚀 บันทึกและอัปเดตหน้าเว็บผู้บริหารทันที';
+    btn.disabled = false; btn.textContent = '🚀 บันทึกและอัปเดตหน้าเว็บทันที';
   }
 }
 </script>
