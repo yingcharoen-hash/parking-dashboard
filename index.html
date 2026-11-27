@@ -400,6 +400,49 @@
   </div>
 </div>
 
+<!-- Admin Import 3-Step Walkthrough Modal (Shown during Auto-Demo Category 8) -->
+<div id="adminDemoModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closeAdminDemoModal()">
+  <div class="modal-card" style="max-width:680px">
+    <div class="modal-hdr">
+      <h3>🛠️ ตัวอย่างการใช้งาน: หน้าแอดมินนำเข้าไฟล์รายวัน (3 ขั้นตอน)</h3>
+      <button class="modal-close" onclick="closeAdminDemoModal()">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+      <div id="admDemoStep1" style="border:2px dashed #3b82f6;background:#eff6ff;border-radius:10px;padding:12px 16px;text-align:center">
+        <div style="font-weight:700;color:var(--primary);font-size:0.9rem">ขั้นตอนที่ 1: ลากไฟล์ .xls ประจำวันมาวางในกล่องอัปโหลด (เลือกพร้อมกันได้หลายไฟล์)</div>
+        <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:8px">
+          <span class="badge badge-ok" style="font-size:0.8rem;padding:4px 10px">📄 19-11 2.xls (ลาน 2)</span>
+          <span class="badge badge-ok" style="font-size:0.8rem;padding:4px 10px">📄 19-11 3.xls (ลาน 3)</span>
+          <span class="badge badge-ok" style="font-size:0.8rem;padding:4px 10px">📄 20-11 2.xls (ลาน 2)</span>
+        </div>
+      </div>
+
+      <div id="admDemoStep2" style="border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:#fff">
+        <div style="font-weight:700;color:var(--primary);font-size:0.88rem;margin-bottom:6px">ขั้นตอนที่ 2: ตรวจสอบตารางพรีวิว (แยกรายวัน / รายเดือน และกันยอดซ้ำอัตโนมัติ)</div>
+        <table style="font-size:0.78rem">
+          <thead><tr><th>ชื่อไฟล์</th><th>วันที่</th><th>ลานจอดรถ</th><th>รายวัน</th><th>รายเดือน</th><th>รวม</th><th>สถานะ</th></tr></thead>
+          <tbody>
+            <tr><td>19-11 2.xls</td><td>2026-11-19</td><td>ลาน 2</td><td>3,891</td><td>134</td><td>4,025</td><td><span class="badge badge-ok">พร้อมบันทึก</span></td></tr>
+            <tr><td>19-11 3.xls</td><td>2026-11-19</td><td>ลาน 3</td><td>2,135</td><td>73</td><td>2,208</td><td><span class="badge badge-ok">พร้อมบันทึก</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="admDemoStep3" style="border:1px solid #bbf7d0;background:#f0fdf4;border-radius:10px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div>
+          <div style="font-weight:700;color:#166534;font-size:0.9rem">ขั้นตอนที่ 3: กดปุ่มบันทึกเพื่ออัปเดตหน้าเว็บทันที</div>
+          <div style="font-size:0.78rem;color:#15803d">ระบบซิงค์ไฟล์ขึ้น GitHub Pages อัตโนมัติ (หน้าเว็บอัปเดตภายใน ~1 นาที)</div>
+        </div>
+        <span class="btn" style="background:#16a34a;pointer-events:none">🚀 บันทึกและอัปเดตหน้าเว็บ</span>
+      </div>
+    </div>
+    <div class="modal-ftr" style="gap:8px">
+      <a href="./admin.html" class="btn">🛠️ เปิดหน้าแอดมินจริง</a>
+      <button class="btn btn-outline" style="color:var(--muted);border-color:#cbd5e1" onclick="closeAdminDemoModal()">ปิดหน้าต่าง</button>
+    </div>
+  </div>
+</div>
+
 <div class="controls-bar">
   <div class="ctrl-group" id="grpDate" style="gap:6px;padding:4px 6px;border-radius:8px">
     <label for="dateFrom">ช่วงวันที่:</label>
@@ -1226,14 +1269,24 @@ function exportCurrentCSV() {
 // EXPORT MODAL & BATCH PNG HELPERS
 // ==========================================
 function openExportModal() {
+  closeAdminDemoModal();
   const m = document.getElementById('exportModal');
   if (m) m.style.display = 'flex';
 }
 function closeExportModal() {
   const m = document.getElementById('exportModal');
   if (m) m.style.display = 'none';
-  const card = document.querySelector('.modal-card');
+  const card = document.querySelector('#exportModal .modal-card');
   if (card) card.classList.remove('demo-highlight');
+}
+function openAdminDemoModal() {
+  closeExportModal();
+  const m = document.getElementById('adminDemoModal');
+  if (m) m.style.display = 'flex';
+}
+function closeAdminDemoModal() {
+  const m = document.getElementById('adminDemoModal');
+  if (m) m.style.display = 'none';
 }
 function exportAllChartsPNG() {
   const chartsToExport = [
@@ -1438,28 +1491,41 @@ function applyDemoCue(cueId, spokenText) {
       }, 200);
       break;
 
-    // หมวด 8: Export Modal & Admin Button
+    // หมวด 8: Export Modal & Admin 3-Step Walkthrough
     case 'export_modal':
       openExportModal();
-      setTimeout(() => { if (isDemoRunning) focusCard('.modal-card', 'center'); }, 150);
+      setTimeout(() => { if (isDemoRunning) focusCard('#exportModal .modal-card', 'center'); }, 150);
       break;
     case 'admin_btn':
       closeExportModal();
+      closeAdminDemoModal();
       window.scrollTo({ top: 0, behavior: 'smooth' });
       focusCard('#btnAdminNav', 'start');
+      break;
+    case 'admin_step1':
+      openAdminDemoModal();
+      setTimeout(() => { if (isDemoRunning) focusCard('#admDemoStep1', 'center'); }, 150);
+      break;
+    case 'admin_step2':
+      openAdminDemoModal();
+      setTimeout(() => { if (isDemoRunning) focusCard('#admDemoStep2', 'center'); }, 150);
+      break;
+    case 'admin_step3':
+      openAdminDemoModal();
+      setTimeout(() => { if (isDemoRunning) focusCard('#admDemoStep3', 'center'); }, 150);
       break;
   }
 }
 
 const DEMO_META = [
   { file: 'demo_cat1.mp3', title: 'ภาพรวมและแถบควบคุมหลัก (Global Controls)' },
-  { file: 'demo_cat2.mp3', title: 'แท็บ 1: ภาพรวม & สถิติรายวัน' },
-  { file: 'demo_cat3.mp3', title: 'แท็บ 2: ระยะเวลาจอดรถ (Mean / Median / P90)' },
-  { file: 'demo_cat4.mp3', title: 'แท็บ 3: ช่วงเวลาเร่งด่วน 24 ชั่วโมง' },
-  { file: 'demo_cat5.mp3', title: 'แท็บ 4: อัตราครองพื้นที่ & รถจอดค้างคืน' },
-  { file: 'demo_cat6.mp3', title: 'แท็บ 5: พฤติกรรมรถจอดด่วน 0–15 นาที' },
-  { file: 'demo_cat7.mp3', title: 'แท็บ 6: สรุปประเด็นสำคัญอัตโนมัติ' },
-  { file: 'demo_cat8.mp3', title: 'การส่งออกรายงาน (Export) & ระบบแอดมิน' },
+  { file: 'demo_cat2.mp3', title: 'เมนู 1: ภาพรวม & สถิติรายวัน' },
+  { file: 'demo_cat3.mp3', title: 'เมนู 2: ระยะเวลาจอดรถ (Mean / Median / P90)' },
+  { file: 'demo_cat4.mp3', title: 'เมนู 3: ช่วงเวลาเร่งด่วน 24 ชั่วโมง' },
+  { file: 'demo_cat5.mp3', title: 'เมนู 4: อัตราครองพื้นที่ & รถจอดค้างคืน' },
+  { file: 'demo_cat6.mp3', title: 'เมนู 5: พฤติกรรมรถจอดด่วน 0–15 นาที' },
+  { file: 'demo_cat7.mp3', title: 'เมนู 6: สรุปประเด็นสำคัญอัตโนมัติ' },
+  { file: 'demo_cat8.mp3', title: 'การส่งออกรายงาน (Export) & วิธีนำเข้าไฟล์แอดมิน' },
 ];
 
 function updateDemoBanner(stepNum, totalSteps, badgeTxt, titleTxt, descTxt) {
@@ -1480,6 +1546,7 @@ function runDemoByIndex(idx) {
   if (!isDemoRunning || idx < 0 || idx >= DEMO_META.length) return;
   clearStepTimeouts();
   clearHighlights();
+  if (idx < 7) closeAdminDemoModal();
   currentDemoIndex = idx;
   activeCueSet = new Set();
 
@@ -1524,7 +1591,7 @@ function runDemoByIndex(idx) {
     }
   };
 
-  demoAudio.src = `./audio/${meta.file}?v=3`;
+  demoAudio.src = `./audio/${meta.file}?v=4`;
   demoAudio.muted = isDemoMuted;
   demoAudio.currentTime = 0;
   demoAudio.onended = goNext;
@@ -1571,7 +1638,7 @@ async function startAutoDemo() {
 
   if (!DEMO_CUES) {
     try {
-      const res = await fetch('./audio/demo_cues.json?v=3');
+      const res = await fetch('./audio/demo_cues.json?v=4');
       if (res.ok) DEMO_CUES = await res.json();
     } catch (e) { console.warn('Could not load demo_cues.json', e); }
   }
