@@ -179,33 +179,52 @@
     100% { transform: scale(1.02); box-shadow: 0 0 30px rgba(245, 158, 11, 0.9); }
   }
 
-  /* Demo Progress Banner — docked cleanly at BOTTOM so it NEVER blocks header/filters/tabs */
+  /* Demo Side Panel — docked cleanly on the RIGHT side so it NEVER covers top/bottom content */
+  @media (min-width: 1024px) {
+    body.demo-active main,
+    body.demo-active .controls-bar,
+    body.demo-active .tabs {
+      padding-right: 252px;
+      transition: padding-right 0.25s ease;
+    }
+  }
   .demo-banner {
     position: fixed;
-    bottom: 16px;
-    left: 50%;
-    transform: translateX(-50%);
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
     z-index: 10002;
-    width: 94%;
-    max-width: 780px;
+    width: 226px;
     background: rgba(15, 23, 42, 0.96);
     backdrop-filter: blur(8px);
     color: #fff;
-    border-radius: 12px;
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+    border-radius: 14px;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.38);
     border: 1px solid rgba(255, 255, 255, 0.2);
     overflow: hidden;
-    animation: slideUp 0.3s ease-out;
+    animation: slideInRight 0.3s ease-out;
   }
-  @keyframes slideUp {
-    from { opacity: 0; transform: translate(-50%, 20px); }
-    to { opacity: 1; transform: translate(-50%, 0); }
+  @keyframes slideInRight {
+    from { opacity: 0; transform: translate(24px, -50%); }
+    to { opacity: 1; transform: translate(0, -50%); }
   }
   .demo-banner-content {
     display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 14px 14px 12px;
+  }
+  .demo-top-row {
+    display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px 18px;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .demo-btn-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
   }
   .demo-badge-step {
     background: #f59e0b;
@@ -339,19 +358,23 @@
   <span class="demo-text">เริ่มโหมดสาธิตอัตโนมัติ (Auto-Demo)</span>
 </button>
 
-<!-- Auto-Demo Floating Banner -->
+<!-- Auto-Demo Right Side Control Panel -->
 <div id="demoBanner" class="demo-banner" style="display:none;">
   <div class="demo-banner-content">
-    <span class="demo-badge-step" id="demoStepBadge">ขั้นตอนที่ 1/4</span>
-    <div style="flex:1">
-      <div style="font-weight:700;font-size:0.92rem" id="demoStepTitle">กำลังรันโหมดสาธิตอัตโนมัติ...</div>
-      <div style="font-size:0.8rem;color:#cbd5e1" id="demoStepDesc">ไฮไลต์กรอบที่การ์ด KPI สรุปสถิติสำคัญด้านบน</div>
+    <div class="demo-top-row">
+      <span class="demo-badge-step" id="demoStepBadge">หมวด 1/8</span>
+      <div class="demo-timer" id="demoTimer">0s</div>
     </div>
-    <div class="demo-timer" id="demoTimer">0s</div>
-    <button class="demo-stop-btn" onclick="prevDemoStep()" style="background:rgba(255,255,255,0.12);color:#e2e8f0;border-color:rgba(255,255,255,0.25)" title="หมวดก่อนหน้า">⏮️</button>
-    <button class="demo-stop-btn" onclick="nextDemoStep()" style="background:rgba(255,255,255,0.12);color:#e2e8f0;border-color:rgba(255,255,255,0.25)" title="หมวดถัดไป">⏭️</button>
-    <button class="demo-stop-btn" id="demoMuteBtn" onclick="toggleDemoMute()" style="background:rgba(59,130,246,0.25);color:#bfdbfe;border-color:rgba(59,130,246,0.5)">🔊 เสียง: เปิด</button>
-    <button class="demo-stop-btn" onclick="stopAutoDemo()">⏹️ หยุด</button>
+    <div>
+      <div style="font-weight:700;font-size:0.86rem;line-height:1.35;margin-bottom:4px" id="demoStepTitle">กำลังรันโหมดสาธิต...</div>
+      <div style="font-size:0.75rem;color:#cbd5e1;line-height:1.45;max-height:120px;overflow-y:auto" id="demoStepDesc">เตรียมข้อมูล...</div>
+    </div>
+    <div class="demo-btn-row">
+      <button class="demo-stop-btn" onclick="prevDemoStep()" style="background:rgba(255,255,255,0.12);color:#e2e8f0;border-color:rgba(255,255,255,0.25)" title="หมวดก่อนหน้า">⏮️ ก่อนหน้า</button>
+      <button class="demo-stop-btn" onclick="nextDemoStep()" style="background:rgba(255,255,255,0.12);color:#e2e8f0;border-color:rgba(255,255,255,0.25)" title="หมวดถัดไป">ถัดไป ⏭️</button>
+    </div>
+    <button class="demo-stop-btn" id="demoMuteBtn" onclick="toggleDemoMute()" style="width:100%;background:rgba(59,130,246,0.25);color:#bfdbfe;border-color:rgba(59,130,246,0.5)">🔊 เสียง: เปิด</button>
+    <button class="demo-stop-btn" onclick="stopAutoDemo()" style="width:100%">⏹️ หยุดการสาธิต</button>
   </div>
   <div class="demo-progress-bar"><div class="demo-progress-fill" id="demoProgress"></div></div>
 </div>
@@ -1591,7 +1614,7 @@ function runDemoByIndex(idx) {
     }
   };
 
-  demoAudio.src = `./audio/${meta.file}?v=4`;
+  demoAudio.src = `./audio/${meta.file}?v=5`;
   demoAudio.muted = isDemoMuted;
   demoAudio.currentTime = 0;
   demoAudio.onended = goNext;
@@ -1638,12 +1661,15 @@ async function startAutoDemo() {
 
   if (!DEMO_CUES) {
     try {
-      const res = await fetch('./audio/demo_cues.json?v=4');
+      const res = await fetch('./audio/demo_cues.json?v=5');
       if (res.ok) DEMO_CUES = await res.json();
     } catch (e) { console.warn('Could not load demo_cues.json', e); }
   }
 
-  // Hide floating bottom-right button while bottom banner is visible so there is zero overlap
+  document.body.classList.add('demo-active');
+  setTimeout(() => Object.values(charts).forEach(c => c.resize()), 300);
+
+  // Hide floating bottom-right button while side panel is visible so there is zero overlap
   const btn = document.getElementById('btnAutoDemo');
   if (btn) btn.style.display = 'none';
 
@@ -1661,6 +1687,8 @@ async function startAutoDemo() {
 
 function stopAutoDemo(finished = false) {
   isDemoRunning = false;
+  document.body.classList.remove('demo-active');
+  setTimeout(() => Object.values(charts).forEach(c => c.resize()), 300);
   demoAudio.pause();
   demoAudio.ontimeupdate = null;
   demoAudio.onended = null;
