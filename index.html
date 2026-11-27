@@ -1537,6 +1537,12 @@ function applyDemoCue(cueId, spokenText) {
       openAdminDemoModal();
       setTimeout(() => { if (isDemoRunning) focusCard('#admDemoStep3', 'center'); }, 150);
       break;
+    case 'outro':
+      closeAdminDemoModal();
+      closeExportModal();
+      switchTab('tab1', document.querySelectorAll('.tab-btn')[0]);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      break;
   }
 }
 
@@ -1614,7 +1620,7 @@ function runDemoByIndex(idx) {
     }
   };
 
-  demoAudio.src = `./audio/${meta.file}?v=5`;
+  demoAudio.src = `./audio/${meta.file}?v=6`;
   demoAudio.muted = isDemoMuted;
   demoAudio.currentTime = 0;
   demoAudio.onended = goNext;
@@ -1661,7 +1667,7 @@ async function startAutoDemo() {
 
   if (!DEMO_CUES) {
     try {
-      const res = await fetch('./audio/demo_cues.json?v=5');
+      const res = await fetch('./audio/demo_cues.json?v=6');
       if (res.ok) DEMO_CUES = await res.json();
     } catch (e) { console.warn('Could not load demo_cues.json', e); }
   }
