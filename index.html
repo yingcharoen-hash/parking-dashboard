@@ -1620,7 +1620,7 @@ function runDemoByIndex(idx) {
     }
   };
 
-  demoAudio.src = `./audio/${meta.file}?v=7`;
+  demoAudio.src = `./audio/${meta.file}?v=8`;
   demoAudio.muted = isDemoMuted;
   demoAudio.currentTime = 0;
   demoAudio.onended = goNext;
@@ -1667,7 +1667,7 @@ async function startAutoDemo() {
 
   if (!DEMO_CUES) {
     try {
-      const res = await fetch('./audio/demo_cues.json?v=7');
+      const res = await fetch('./audio/demo_cues.json?v=8');
       if (res.ok) DEMO_CUES = await res.json();
     } catch (e) { console.warn('Could not load demo_cues.json', e); }
   }
