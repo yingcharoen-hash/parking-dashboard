@@ -179,26 +179,26 @@
     100% { transform: scale(1.02); box-shadow: 0 0 30px rgba(245, 158, 11, 0.9); }
   }
 
-  /* Demo Progress Banner */
+  /* Demo Progress Banner — docked cleanly at BOTTOM so it NEVER blocks header/filters/tabs */
   .demo-banner {
     position: fixed;
-    top: 18px;
+    bottom: 16px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 10000;
-    width: 92%;
-    max-width: 660px;
+    z-index: 10002;
+    width: 94%;
+    max-width: 780px;
     background: rgba(15, 23, 42, 0.96);
     backdrop-filter: blur(8px);
     color: #fff;
     border-radius: 12px;
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.2);
     overflow: hidden;
-    animation: slideDown 0.35s ease-out;
+    animation: slideUp 0.3s ease-out;
   }
-  @keyframes slideDown {
-    from { opacity: 0; transform: translate(-50%, -20px); }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translate(-50%, 20px); }
     to { opacity: 1; transform: translate(-50%, 0); }
   }
   .demo-banner-content {
@@ -327,7 +327,7 @@
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-outline" onclick="toggleAutoDemo()" style="background:rgba(245,158,11,0.22);border-color:#f59e0b;color:#fff;font-weight:700">▶️ เริ่มโหมดสาธิต (Auto-Demo)</button>
-      <a href="./admin.html" class="btn btn-outline">🛠️ หน้าแอดมินนำเข้าไฟล์รายวัน</a>
+      <a href="./admin.html" id="btnAdminNav" class="btn btn-outline">🛠️ หน้าแอดมินนำเข้าไฟล์รายวัน</a>
       <button class="btn btn-outline" onclick="openExportModal()">⬇️ Export รายงาน</button>
     </div>
   </div>
@@ -401,19 +401,19 @@
 </div>
 
 <div class="controls-bar">
-  <div class="ctrl-group">
+  <div class="ctrl-group" id="grpDate" style="gap:6px;padding:4px 6px;border-radius:8px">
     <label for="dateFrom">ช่วงวันที่:</label>
     <input type="date" id="dateFrom" onchange="onDateChange()" />
     <span>ถึง</span>
     <input type="date" id="dateTo" onchange="onDateChange()" />
+    <div class="preset-bar" style="margin-left:4px">
+      <button class="preset-btn active" id="preAll" onclick="setPreset('ALL', this)">ทั้งหมด</button>
+      <button class="preset-btn" id="preMonth" onclick="setPreset('LAST_MONTH', this)">เดือนล่าสุด</button>
+      <button class="preset-btn" id="pre30" onclick="setPreset('30D', this)">30 วันล่าสุด</button>
+      <button class="preset-btn" id="pre7" onclick="setPreset('7D', this)">7 วันล่าสุด</button>
+    </div>
   </div>
-  <div class="preset-bar">
-    <button class="preset-btn active" id="preAll" onclick="setPreset('ALL', this)">ทั้งหมด</button>
-    <button class="preset-btn" id="preMonth" onclick="setPreset('LAST_MONTH', this)">เดือนล่าสุด</button>
-    <button class="preset-btn" id="pre30" onclick="setPreset('30D', this)">30 วันล่าสุด</button>
-    <button class="preset-btn" id="pre7" onclick="setPreset('7D', this)">7 วันล่าสุด</button>
-  </div>
-  <div class="ctrl-group">
+  <div class="ctrl-group" id="grpLot" style="padding:4px 6px;border-radius:8px">
     <label for="lotFilter">ลานจอดรถ:</label>
     <select id="lotFilter" onchange="renderAll()">
       <option value="ALL">ทุกลานจอดรถ (รวม)</option>
@@ -421,7 +421,7 @@
       <option value="ลาน 3">ลาน 3 / โซน B</option>
     </select>
   </div>
-  <div class="ctrl-group">
+  <div class="ctrl-group" id="grpType" style="padding:4px 6px;border-radius:8px">
     <label for="typeFilter">ประเภทรถ:</label>
     <select id="typeFilter" onchange="renderAll()">
       <option value="ALL">ทุกประเภท (รายวัน+รายเดือน)</option>
@@ -429,7 +429,7 @@
       <option value="รายเดือน">รถรายเดือน</option>
     </select>
   </div>
-  <div class="ctrl-group" style="margin-left:auto">
+  <div class="ctrl-group" id="grpCap" style="margin-left:auto;padding:4px 6px;border-radius:8px">
     <label>ความจุ ลาน 2:</label>
     <input type="number" id="capL2" value="346" min="1" onchange="renderAll()" />
     <label>ลาน 3:</label>
@@ -1249,7 +1249,7 @@ function exportAllChartsPNG() {
 }
 
 // ==========================================
-// AUTO-DEMO CONTROLLER (8 Full Categories + Calm Thai Neural Voiceover)
+// AUTO-DEMO CONTROLLER (Exact Audio-Timestamp Synced Highlights across 8 Categories)
 // ==========================================
 let demoTimerInterval = null;
 let demoStepTimeouts = [];
@@ -1257,6 +1257,8 @@ let isDemoRunning = false;
 let isDemoMuted = false;
 let demoElapsed = 0;
 let currentDemoIndex = 0;
+let DEMO_CUES = null;
+let activeCueSet = new Set();
 const demoAudio = new Audio();
 demoAudio.preload = 'auto';
 
@@ -1276,61 +1278,6 @@ function clearStepTimeouts() {
   demoStepTimeouts = [];
 }
 
-function playStepVoice(audioUrl, fallbackMs, onNext) {
-  demoAudio.pause();
-  demoAudio.onended = null;
-  demoAudio.onerror = null;
-
-  let advanced = false;
-  const advanceOnce = () => {
-    if (advanced || !isDemoRunning) return;
-    advanced = true;
-    // Natural 1.2s breathing pause between categories
-    const t = setTimeout(() => { if (isDemoRunning && onNext) onNext(); }, 1200);
-    demoStepTimeouts.push(t);
-  };
-
-  demoAudio.src = audioUrl + '?v=2';
-  demoAudio.muted = isDemoMuted;
-  demoAudio.currentTime = 0;
-  demoAudio.onended = advanceOnce;
-  demoAudio.onerror = () => {
-    const t = setTimeout(advanceOnce, fallbackMs);
-    demoStepTimeouts.push(t);
-  };
-
-  const playPromise = demoAudio.play();
-  if (playPromise && typeof playPromise.catch === 'function') {
-    playPromise.catch(() => {
-      const t = setTimeout(advanceOnce, fallbackMs);
-      demoStepTimeouts.push(t);
-    });
-  }
-}
-
-function toggleAutoDemo() {
-  if (isDemoRunning) {
-    stopAutoDemo(false);
-  } else {
-    startAutoDemo();
-  }
-}
-
-function prevDemoStep() {
-  if (!isDemoRunning) return;
-  const prevIdx = Math.max(0, currentDemoIndex - 1);
-  runDemoByIndex(prevIdx);
-}
-
-function nextDemoStep() {
-  if (!isDemoRunning) return;
-  if (currentDemoIndex + 1 >= DEMO_STEPS.length) {
-    stopAutoDemo(true);
-  } else {
-    runDemoByIndex(currentDemoIndex + 1);
-  }
-}
-
 function clearHighlights() {
   document.querySelectorAll('.demo-highlight').forEach(el => el.classList.remove('demo-highlight'));
   Object.values(charts).forEach(c => {
@@ -1342,6 +1289,179 @@ function clearHighlights() {
   });
 }
 
+function focusCard(selector, scrollBlock = 'center') {
+  const el = document.querySelector(selector);
+  if (!el) return null;
+  const target = el.tagName === 'CANVAS' ? el.closest('.card') : el;
+  if (target) {
+    target.scrollIntoView({ behavior: 'smooth', block: scrollBlock });
+    target.classList.add('demo-highlight');
+  }
+  return target;
+}
+
+// Exact visual cue executor — fires at the exact second the voice mentions each element!
+function applyDemoCue(cueId, spokenText) {
+  if (!isDemoRunning) return;
+  clearHighlights();
+  if (spokenText) {
+    const desc = document.getElementById('demoStepDesc');
+    if (desc) desc.textContent = '🔊 "' + spokenText + '"';
+  }
+
+  switch (cueId) {
+    // หมวด 1: Header & Global Controls
+    case 'header':
+      closeExportModal();
+      switchTab('tab1', document.querySelectorAll('.tab-btn')[0]);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      focusCard('header', 'start');
+      break;
+    case 'controls_all':
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      focusCard('.controls-bar', 'start');
+      break;
+    case 'ctrl_date':
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      focusCard('#grpDate', 'start');
+      break;
+    case 'ctrl_lot': {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      focusCard('#grpLot', 'start');
+      const lotSelect = document.getElementById('lotFilter');
+      if (lotSelect) { lotSelect.value = 'ลาน 2'; renderAll(); }
+      break;
+    }
+    case 'ctrl_type':
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      focusCard('#grpType', 'start');
+      break;
+    case 'ctrl_cap':
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      focusCard('#grpCap', 'start');
+      break;
+
+    // หมวด 2: Tab 1 KPI & Daily Trends
+    case 'kpi_cards': {
+      closeExportModal();
+      const lotSelect = document.getElementById('lotFilter');
+      if (lotSelect && lotSelect.value !== 'ALL') { lotSelect.value = 'ALL'; renderAll(); }
+      switchTab('tab1', document.querySelectorAll('.tab-btn')[0]);
+      const kpi = document.getElementById('kpiGrid');
+      if (kpi) {
+        kpi.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        kpi.querySelectorAll('.kpi-card').forEach(c => c.classList.add('demo-highlight'));
+      }
+      break;
+    }
+    case 'c_monthly_avg':
+      focusCard('#cMonthlyAvg');
+      break;
+    case 'c_monthly_type':
+      focusCard('#cMonthlyType');
+      break;
+    case 'c_daily_line':
+      focusCard('#cDailyLine');
+      break;
+
+    // หมวด 3: Tab 2 Duration
+    case 'c_dur_buckets':
+      closeExportModal();
+      switchTab('tab2', document.querySelectorAll('.tab-btn')[1]);
+      setTimeout(() => { if (isDemoRunning) focusCard('#cDurBuckets'); }, 200);
+      break;
+    case 'c_dur_avg':
+      focusCard('#cDurAvg');
+      break;
+    case 't_dur_table': {
+      const card = document.getElementById('tDurTable')?.closest('.card');
+      if (card) { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); card.classList.add('demo-highlight'); }
+      break;
+    }
+
+    // หมวด 4: Tab 3 Hourly Peak + Auto Tooltip
+    case 'c_hr_entries':
+      closeExportModal();
+      switchTab('tab3', document.querySelectorAll('.tab-btn')[2]);
+      setTimeout(() => {
+        if (!isDemoRunning) return;
+        focusCard('#cHrEntries');
+        const c = charts['cHrEntries'];
+        if (c && c.data && c.data.datasets && c.data.datasets.length) {
+          let maxVal = -1, peakIdx = 7;
+          c.data.datasets.forEach(ds => ds.data.forEach((v, i) => { if (v > maxVal) { maxVal = v; peakIdx = i; } }));
+          const els = c.data.datasets.map((_, dsIdx) => ({ datasetIndex: dsIdx, index: peakIdx }));
+          c.setActiveElements(els);
+          if (c.tooltip) c.tooltip.setActiveElements(els, { x: 0, y: 0 });
+          c.update();
+        }
+      }, 250);
+      break;
+    case 'c_hr_type':
+      focusCard('#cHrType');
+      break;
+
+    // หมวด 5: Tab 4 Occupancy & Pre-Midnight
+    case 'c_occ_l2':
+      closeExportModal();
+      switchTab('tab4', document.querySelectorAll('.tab-btn')[3]);
+      setTimeout(() => { if (isDemoRunning) focusCard('#cOccL2'); }, 200);
+      break;
+    case 'c_occ_l3':
+      focusCard('#cOccL3');
+      break;
+    case 'c_avail_bars':
+      focusCard('#cAvailBars');
+      break;
+    case 'c_pre_mid':
+      focusCard('#cPreMid');
+      break;
+
+    // หมวด 6: Tab 5 Short-Stay 0-15 Min
+    case 'c_s15_hourly':
+      closeExportModal();
+      switchTab('tab5', document.querySelectorAll('.tab-btn')[4]);
+      setTimeout(() => { if (isDemoRunning) focusCard('#cS15Hourly'); }, 200);
+      break;
+    case 'c_s15_monthly':
+      focusCard('#cS15Monthly');
+      break;
+
+    // หมวด 7: Tab 6 Dynamic Audit
+    case 't_audit':
+      closeExportModal();
+      switchTab('tab6', document.querySelectorAll('.tab-btn')[5]);
+      setTimeout(() => {
+        if (!isDemoRunning) return;
+        const card = document.getElementById('dynamicAuditTable')?.closest('.card');
+        if (card) { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); card.classList.add('demo-highlight'); }
+      }, 200);
+      break;
+
+    // หมวด 8: Export Modal & Admin Button
+    case 'export_modal':
+      openExportModal();
+      setTimeout(() => { if (isDemoRunning) focusCard('.modal-card', 'center'); }, 150);
+      break;
+    case 'admin_btn':
+      closeExportModal();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      focusCard('#btnAdminNav', 'start');
+      break;
+  }
+}
+
+const DEMO_META = [
+  { file: 'demo_cat1.mp3', title: 'ภาพรวมและแถบควบคุมหลัก (Global Controls)' },
+  { file: 'demo_cat2.mp3', title: 'แท็บ 1: ภาพรวม & สถิติรายวัน' },
+  { file: 'demo_cat3.mp3', title: 'แท็บ 2: ระยะเวลาจอดรถ (Mean / Median / P90)' },
+  { file: 'demo_cat4.mp3', title: 'แท็บ 3: ช่วงเวลาเร่งด่วน 24 ชั่วโมง' },
+  { file: 'demo_cat5.mp3', title: 'แท็บ 4: อัตราครองพื้นที่ & รถจอดค้างคืน' },
+  { file: 'demo_cat6.mp3', title: 'แท็บ 5: พฤติกรรมรถจอดด่วน 0–15 นาที' },
+  { file: 'demo_cat7.mp3', title: 'แท็บ 6: สรุปประเด็นสำคัญอัตโนมัติ' },
+  { file: 'demo_cat8.mp3', title: 'การส่งออกรายงาน (Export) & ระบบแอดมิน' },
+];
+
 function updateDemoBanner(stepNum, totalSteps, badgeTxt, titleTxt, descTxt) {
   const badge = document.getElementById('demoStepBadge');
   const title = document.getElementById('demoStepTitle');
@@ -1351,199 +1471,114 @@ function updateDemoBanner(stepNum, totalSteps, badgeTxt, titleTxt, descTxt) {
 
   if (badge) badge.textContent = badgeTxt;
   if (title) title.textContent = titleTxt;
-  if (desc) desc.textContent = descTxt;
+  if (desc && descTxt) desc.textContent = descTxt;
   if (timer) timer.textContent = `${demoElapsed}s`;
   if (progress) progress.style.width = `${Math.min(100, (stepNum / totalSteps) * 100)}%`;
 }
 
-const DEMO_STEPS = [
-  // หมวดที่ 1: ภาพรวม & แถบควบคุมหลัก
-  () => {
-    clearHighlights();
-    closeExportModal();
-    switchTab('tab1', document.querySelectorAll('.tab-btn')[0]);
-    const ctrl = document.querySelector('.controls-bar');
-    if (ctrl) {
-      ctrl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      ctrl.classList.add('demo-highlight');
-    }
-    // Demo switching to โซน A (ลาน 2) smoothly mid-narration
-    demoStepTimeouts.push(setTimeout(() => {
-      if (!isDemoRunning) return;
-      const lotSelect = document.getElementById('lotFilter');
-      if (lotSelect) {
-        ctrl.classList.remove('demo-highlight');
-        lotSelect.classList.add('demo-highlight');
-        lotSelect.value = 'ลาน 2';
-        renderAll();
-      }
-    }, 9500));
-
-    updateDemoBanner(1, 8, 'หมวด 1/8', 'ภาพรวมและแถบควบคุมหลัก (Global Controls)', '🔊 แนะนำแถบควบคุม: ช่วงวันที่, โซนจอดรถ (ทดลองสลับเป็น โซน A/ลาน 2), ประเภทรถ และความจุจำลอง');
-    playStepVoice('./audio/demo_cat1.mp3', 20000, () => runDemoByIndex(1));
-  },
-
-  // หมวดที่ 2: แท็บ 1 ภาพรวม & สถิติรายวัน
-  () => {
-    clearHighlights();
-    closeExportModal();
-    // Reset back to ALL so KPI numbers match overall summary (~6,000-6,500/day)
-    const lotSelect = document.getElementById('lotFilter');
-    if (lotSelect && lotSelect.value !== 'ALL') { lotSelect.value = 'ALL'; renderAll(); }
-    switchTab('tab1', document.querySelectorAll('.tab-btn')[0]);
-
-    const kpi = document.getElementById('kpiGrid');
-    if (kpi) {
-      kpi.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      kpi.querySelectorAll('.kpi-card').forEach(card => card.classList.add('demo-highlight'));
-    }
-    demoStepTimeouts.push(setTimeout(() => {
-      if (!isDemoRunning) return;
-      clearHighlights();
-      const c1 = document.getElementById('cMonthlyAvg')?.closest('.card');
-      if (c1) { c1.scrollIntoView({ behavior: 'smooth', block: 'center' }); c1.classList.add('demo-highlight'); }
-    }, 10500));
-
-    updateDemoBanner(2, 8, 'หมวด 2/8', 'แท็บ 1: ภาพรวม & สถิติรายวัน', '🔊 วิเคราะห์การ์ด KPI ทั้ง 5 มิติ และกราฟแนวโน้มรายเดือนเปรียบเทียบยอดจริง vs ยอดปกติ');
-    playStepVoice('./audio/demo_cat2.mp3', 20000, () => runDemoByIndex(2));
-  },
-
-  // หมวดที่ 3: แท็บ 2 ระยะเวลาจอดรถ
-  () => {
-    clearHighlights();
-    closeExportModal();
-    switchTab('tab2', document.querySelectorAll('.tab-btn')[1]);
-
-    demoStepTimeouts.push(setTimeout(() => {
-      if (!isDemoRunning) return;
-      const cDur = document.getElementById('cDurBuckets')?.closest('.card');
-      if (cDur) { cDur.scrollIntoView({ behavior: 'smooth', block: 'center' }); cDur.classList.add('demo-highlight'); }
-    }, 350));
-
-    demoStepTimeouts.push(setTimeout(() => {
-      if (!isDemoRunning) return;
-      clearHighlights();
-      const cAvg = document.getElementById('cDurAvg')?.closest('.card');
-      if (cAvg) { cAvg.scrollIntoView({ behavior: 'smooth', block: 'center' }); cAvg.classList.add('demo-highlight'); }
-    }, 9500));
-
-    updateDemoBanner(3, 8, 'หมวด 3/8', 'แท็บ 2: ระยะเวลาจอดรถ (Mean / Median / P90)', '🔊 การกระจายตัว 8 ช่วงเวลา และวิธีอ่านค่า Median กับ P90 เพื่อกำหนดอัตราค่าจอด');
-    playStepVoice('./audio/demo_cat3.mp3', 20000, () => runDemoByIndex(3));
-  },
-
-  // หมวดที่ 4: แท็บ 3 ช่วงเวลาเร่งด่วน 24 ชม.
-  () => {
-    clearHighlights();
-    closeExportModal();
-    switchTab('tab3', document.querySelectorAll('.tab-btn')[2]);
-
-    demoStepTimeouts.push(setTimeout(() => {
-      if (!isDemoRunning) return;
-      const chartCanvas = document.getElementById('cHrEntries');
-      if (chartCanvas) {
-        const card = chartCanvas.closest('.card');
-        if (card) { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); card.classList.add('demo-highlight'); }
-        const c = charts['cHrEntries'];
-        if (c && c.data && c.data.datasets && c.data.datasets.length) {
-          let maxVal = -1, peakIdx = 7;
-          c.data.datasets.forEach(ds => ds.data.forEach((val, idx) => { if (val > maxVal) { maxVal = val; peakIdx = idx; } }));
-          const activeEls = c.data.datasets.map((_, dsIdx) => ({ datasetIndex: dsIdx, index: peakIdx }));
-          c.setActiveElements(activeEls);
-          if (c.tooltip) c.tooltip.setActiveElements(activeEls, { x: 0, y: 0 });
-          c.update();
-        }
-      }
-    }, 450));
-
-    updateDemoBanner(4, 8, 'หมวด 4/8', 'แท็บ 3: ช่วงเวลาเร่งด่วน 24 ชั่วโมง', '🔊 เปิด Tooltip จุดพีคเช้า 05:00–09:00 น. และสังเกตรถรายเดือนช่วงเช้ามืด เพื่อจัดกะ รปภ.');
-    playStepVoice('./audio/demo_cat4.mp3', 20000, () => runDemoByIndex(4));
-  },
-
-  // หมวดที่ 5: แท็บ 4 อัตราครองพื้นที่ & รถค้างคืน
-  () => {
-    clearHighlights();
-    closeExportModal();
-    switchTab('tab4', document.querySelectorAll('.tab-btn')[3]);
-
-    demoStepTimeouts.push(setTimeout(() => {
-      if (!isDemoRunning) return;
-      const cL3 = document.getElementById('cOccL3')?.closest('.card');
-      if (cL3) { cL3.scrollIntoView({ behavior: 'smooth', block: 'center' }); cL3.classList.add('demo-highlight'); }
-    }, 400));
-
-    demoStepTimeouts.push(setTimeout(() => {
-      if (!isDemoRunning) return;
-      clearHighlights();
-      const cPm = document.getElementById('cPreMid')?.closest('.card');
-      if (cPm) { cPm.scrollIntoView({ behavior: 'smooth', block: 'center' }); cPm.classList.add('demo-highlight'); }
-    }, 12500));
-
-    updateDemoBanner(5, 8, 'หมวด 5/8', 'แท็บ 4: อัตราครองพื้นที่ & รถจอดค้างคืน', '🔊 ชี้จุดวิกฤตลาน 3 เต็มเกินความจุ 82 คันช่วงสาย และแนวโน้มรถจอดค้างก่อนเที่ยงคืน');
-    playStepVoice('./audio/demo_cat5.mp3', 22000, () => runDemoByIndex(5));
-  },
-
-  // หมวดที่ 6: แท็บ 5 รถจอดด่วน 0-15 นาที
-  () => {
-    clearHighlights();
-    closeExportModal();
-    switchTab('tab5', document.querySelectorAll('.tab-btn')[4]);
-
-    demoStepTimeouts.push(setTimeout(() => {
-      if (!isDemoRunning) return;
-      const c15 = document.getElementById('cS15Hourly')?.closest('.card');
-      if (c15) { c15.scrollIntoView({ behavior: 'smooth', block: 'center' }); c15.classList.add('demo-highlight'); }
-    }, 400));
-
-    updateDemoBanner(6, 8, 'หมวด 6/8', 'แท็บ 5: พฤติกรรมรถจอดด่วน 0–15 นาที', '🔊 วิเคราะห์สัดส่วนจอดด่วนช่วงเย็น 17:00–19:00 น. และเปรียบเทียบลาน 2 vs ลาน 3');
-    playStepVoice('./audio/demo_cat6.mp3', 19000, () => runDemoByIndex(6));
-  },
-
-  // หมวดที่ 7: แท็บ 6 หมายเหตุ & ประเด็นสำคัญอัตโนมัติ
-  () => {
-    clearHighlights();
-    closeExportModal();
-    switchTab('tab6', document.querySelectorAll('.tab-btn')[5]);
-
-    demoStepTimeouts.push(setTimeout(() => {
-      if (!isDemoRunning) return;
-      const tbl = document.getElementById('dynamicAuditTable')?.closest('.card');
-      if (tbl) { tbl.scrollIntoView({ behavior: 'smooth', block: 'center' }); tbl.classList.add('demo-highlight'); }
-    }, 400));
-
-    updateDemoBanner(7, 8, 'หมวด 7/8', 'แท็บ 6: สรุปประเด็นสำคัญอัตโนมัติ', '🔊 ตาราง Dynamic Audit ตรวจจับ 4 ประเด็นสำคัญและข้อเสนอแนะอัตโนมัติทุกครั้งที่อัปเดตข้อมูล');
-    playStepVoice('./audio/demo_cat7.mp3', 18000, () => runDemoByIndex(7));
-  },
-
-  // หมวดที่ 8: การส่งออกรายงาน & ระบบแอดมิน
-  () => {
-    clearHighlights();
-    openExportModal();
-    const modal = document.querySelector('.modal-card');
-    if (modal) modal.classList.add('demo-highlight');
-
-    updateDemoBanner(8, 8, 'หมวด 8/8', 'การส่งออกรายงาน (Export) & ระบบแอดมิน', '🔊 ดาวน์โหลดไฟล์ CSV, บันทึกรูปกราฟ PNG พื้นหลังขาวสำหรับ PowerPoint และหน้าแอดมินนำเข้าไฟล์');
-    playStepVoice('./audio/demo_cat8.mp3', 19000, () => stopAutoDemo(true));
-  }
-];
-
 function runDemoByIndex(idx) {
-  if (!isDemoRunning) return;
+  if (!isDemoRunning || idx < 0 || idx >= DEMO_META.length) return;
   clearStepTimeouts();
+  clearHighlights();
   currentDemoIndex = idx;
-  if (DEMO_STEPS[idx]) DEMO_STEPS[idx]();
+  activeCueSet = new Set();
+
+  const meta = DEMO_META[idx];
+  const cueInfo = DEMO_CUES ? DEMO_CUES[meta.file] : null;
+  const cues = cueInfo ? cueInfo.cues : [];
+
+  updateDemoBanner(idx + 1, DEMO_META.length, `หมวด ${idx + 1}/${DEMO_META.length}`, meta.title, cues[0] ? '🔊 "' + cues[0].text + '"' : '');
+
+  // Trigger cue 0 immediately
+  if (cues.length > 0) {
+    activeCueSet.add(0);
+    applyDemoCue(cues[0].cue, cues[0].text);
+  }
+
+  demoAudio.pause();
+  demoAudio.ontimeupdate = null;
+  demoAudio.onended = null;
+  demoAudio.onerror = null;
+
+  let advanced = false;
+  const goNext = () => {
+    if (advanced || !isDemoRunning) return;
+    advanced = true;
+    const t = setTimeout(() => {
+      if (!isDemoRunning) return;
+      if (idx + 1 < DEMO_META.length) runDemoByIndex(idx + 1);
+      else stopAutoDemo(true);
+    }, 1100);
+    demoStepTimeouts.push(t);
+  };
+
+  // Sync every subsequent cue directly to demoAudio.currentTime!
+  demoAudio.ontimeupdate = () => {
+    if (!isDemoRunning) return;
+    const now = demoAudio.currentTime;
+    for (let i = 1; i < cues.length; i++) {
+      if (!activeCueSet.has(i) && now >= cues[i].at - 0.15) {
+        activeCueSet.add(i);
+        applyDemoCue(cues[i].cue, cues[i].text);
+      }
+    }
+  };
+
+  demoAudio.src = `./audio/${meta.file}?v=3`;
+  demoAudio.muted = isDemoMuted;
+  demoAudio.currentTime = 0;
+  demoAudio.onended = goNext;
+  demoAudio.onerror = () => {
+    // Fallback timer-based cues if audio fails
+    cues.forEach((c, i) => {
+      if (i > 0) demoStepTimeouts.push(setTimeout(() => applyDemoCue(c.cue, c.text), c.at * 1000));
+    });
+    demoStepTimeouts.push(setTimeout(goNext, ((cueInfo && cueInfo.duration) || 20) * 1000));
+  };
+
+  const p = demoAudio.play();
+  if (p && typeof p.catch === 'function') {
+    p.catch(() => {
+      cues.forEach((c, i) => {
+        if (i > 0) demoStepTimeouts.push(setTimeout(() => applyDemoCue(c.cue, c.text), c.at * 1000));
+      });
+      demoStepTimeouts.push(setTimeout(goNext, ((cueInfo && cueInfo.duration) || 20) * 1000));
+    });
+  }
 }
 
-function startAutoDemo() {
+function toggleAutoDemo() {
+  if (isDemoRunning) stopAutoDemo(false);
+  else startAutoDemo();
+}
+
+function prevDemoStep() {
+  if (!isDemoRunning) return;
+  runDemoByIndex(Math.max(0, currentDemoIndex - 1));
+}
+
+function nextDemoStep() {
+  if (!isDemoRunning) return;
+  if (currentDemoIndex + 1 >= DEMO_META.length) stopAutoDemo(true);
+  else runDemoByIndex(currentDemoIndex + 1);
+}
+
+async function startAutoDemo() {
   stopAutoDemo(false);
   isDemoRunning = true;
   demoElapsed = 0;
   currentDemoIndex = 0;
 
-  const btn = document.getElementById('btnAutoDemo');
-  if (btn) {
-    btn.classList.add('running');
-    btn.innerHTML = '<span class="demo-icon">⏹️</span> <span class="demo-text">หยุดโหมดสาธิต</span>';
+  if (!DEMO_CUES) {
+    try {
+      const res = await fetch('./audio/demo_cues.json?v=3');
+      if (res.ok) DEMO_CUES = await res.json();
+    } catch (e) { console.warn('Could not load demo_cues.json', e); }
   }
+
+  // Hide floating bottom-right button while bottom banner is visible so there is zero overlap
+  const btn = document.getElementById('btnAutoDemo');
+  if (btn) btn.style.display = 'none';
 
   const banner = document.getElementById('demoBanner');
   if (banner) banner.style.display = 'block';
@@ -1560,6 +1595,7 @@ function startAutoDemo() {
 function stopAutoDemo(finished = false) {
   isDemoRunning = false;
   demoAudio.pause();
+  demoAudio.ontimeupdate = null;
   demoAudio.onended = null;
   demoAudio.onerror = null;
   if (demoTimerInterval) { clearInterval(demoTimerInterval); demoTimerInterval = null; }
@@ -1568,6 +1604,7 @@ function stopAutoDemo(finished = false) {
 
   const btn = document.getElementById('btnAutoDemo');
   if (btn) {
+    btn.style.display = 'inline-flex';
     btn.classList.remove('running');
     btn.innerHTML = '<span class="demo-icon">▶️</span> <span class="demo-text">เริ่มโหมดสาธิตอัตโนมัติ (Auto-Demo)</span>';
   }
