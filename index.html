@@ -347,7 +347,8 @@
       <div style="font-weight:700;font-size:0.92rem" id="demoStepTitle">กำลังรันโหมดสาธิตอัตโนมัติ...</div>
       <div style="font-size:0.8rem;color:#cbd5e1" id="demoStepDesc">ไฮไลต์กรอบที่การ์ด KPI สรุปสถิติสำคัญด้านบน</div>
     </div>
-    <div class="demo-timer" id="demoTimer">0s / 25s</div>
+    <div class="demo-timer" id="demoTimer">0s</div>
+    <button class="demo-stop-btn" id="demoMuteBtn" onclick="toggleDemoMute()" style="background:rgba(59,130,246,0.25);color:#bfdbfe;border-color:rgba(59,130,246,0.5)">🔊 เสียงพากย์: เปิด</button>
     <button class="demo-stop-btn" onclick="stopAutoDemo()">⏹️ หยุดการสาธิต</button>
   </div>
   <div class="demo-progress-bar"><div class="demo-progress-fill" id="demoProgress"></div></div>
@@ -1246,11 +1247,59 @@ function exportAllChartsPNG() {
 }
 
 // ==========================================
-// AUTO-DEMO CONTROLLER (25 Seconds Sequence)
+// AUTO-DEMO CONTROLLER (With Thai Neural Voiceover)
 // ==========================================
 let demoTimerInterval = null;
 let demoStepTimeouts = [];
 let isDemoRunning = false;
+let isDemoMuted = false;
+let demoElapsed = 0;
+const DEMO_EST_TOTAL = 35; // ~35s synced with 4 Thai voiceover clips
+const demoAudio = new Audio();
+demoAudio.preload = 'auto';
+
+function toggleDemoMute() {
+  isDemoMuted = !isDemoMuted;
+  demoAudio.muted = isDemoMuted;
+  const mb = document.getElementById('demoMuteBtn');
+  if (mb) {
+    mb.textContent = isDemoMuted ? '🔇 เสียงพากย์: ปิด' : '🔊 เสียงพากย์: เปิด';
+    mb.style.background = isDemoMuted ? 'rgba(100,116,139,0.35)' : 'rgba(59,130,246,0.25)';
+    mb.style.color = isDemoMuted ? '#cbd5e1' : '#bfdbfe';
+  }
+}
+
+function playStepVoice(audioUrl, fallbackMs, onNext) {
+  demoAudio.pause();
+  demoAudio.onended = null;
+  demoAudio.onerror = null;
+
+  let advanced = false;
+  const advanceOnce = () => {
+    if (advanced || !isDemoRunning) return;
+    advanced = true;
+    const t = setTimeout(() => { if (isDemoRunning && onNext) onNext(); }, 600);
+    demoStepTimeouts.push(t);
+  };
+
+  demoAudio.src = audioUrl + '?v=1';
+  demoAudio.muted = isDemoMuted;
+  demoAudio.currentTime = 0;
+  demoAudio.onended = advanceOnce;
+  demoAudio.onerror = () => {
+    const t = setTimeout(advanceOnce, fallbackMs);
+    demoStepTimeouts.push(t);
+  };
+
+  const playPromise = demoAudio.play();
+  if (playPromise && typeof playPromise.catch === 'function') {
+    playPromise.catch(() => {
+      // Fallback to timer if browser blocks audio playback
+      const t = setTimeout(advanceOnce, fallbackMs);
+      demoStepTimeouts.push(t);
+    });
+  }
+}
 
 function toggleAutoDemo() {
   if (isDemoRunning) {
@@ -1262,7 +1311,6 @@ function toggleAutoDemo() {
 
 function clearHighlights() {
   document.querySelectorAll('.demo-highlight').forEach(el => el.classList.remove('demo-highlight'));
-  // Clear any active Chart.js tooltips
   Object.values(charts).forEach(c => {
     if (c && c.tooltip) {
       c.setActiveElements([]);
@@ -1272,7 +1320,7 @@ function clearHighlights() {
   });
 }
 
-function updateDemoBanner(stepNum, badgeTxt, titleTxt, descTxt, elapsedSec) {
+function updateDemoBanner(stepNum, badgeTxt, titleTxt, descTxt) {
   const badge = document.getElementById('demoStepBadge');
   const title = document.getElementById('demoStepTitle');
   const desc = document.getElementById('demoStepDesc');
@@ -1282,13 +1330,14 @@ function updateDemoBanner(stepNum, badgeTxt, titleTxt, descTxt, elapsedSec) {
   if (badge) badge.textContent = badgeTxt;
   if (title) title.textContent = titleTxt;
   if (desc) desc.textContent = descTxt;
-  if (timer) timer.textContent = `${elapsedSec}s / 25s`;
-  if (progress) progress.style.width = `${Math.min(100, (elapsedSec / 25) * 100)}%`;
+  if (timer) timer.textContent = `${demoElapsed}s`;
+  if (progress) progress.style.width = `${Math.min(100, (stepNum / 4) * 100)}%`;
 }
 
 function startAutoDemo() {
   stopAutoDemo(false);
   isDemoRunning = true;
+  demoElapsed = 0;
 
   const btn = document.getElementById('btnAutoDemo');
   if (btn) {
@@ -1299,44 +1348,20 @@ function startAutoDemo() {
   const banner = document.getElementById('demoBanner');
   if (banner) banner.style.display = 'block';
 
-  let elapsed = 0;
-  updateDemoBanner(1, 'ขั้นตอนที่ 1/4 (วินาที 0–5)', '1. ไฮไลต์การ์ดสรุป KPI ด้านบน', 'สรุปภาพรวมจำนวนรถเข้าทั้งหมด เฉลี่ยต่อวัน สัดส่วน และเวลาจอดเฉลี่ย', 0);
-
   demoTimerInterval = setInterval(() => {
-    elapsed++;
+    demoElapsed++;
     const timer = document.getElementById('demoTimer');
     const progress = document.getElementById('demoProgress');
-    if (timer) timer.textContent = `${elapsed}s / 25s`;
-    if (progress) progress.style.width = `${Math.min(100, (elapsed / 25) * 100)}%`;
-
-    if (elapsed >= 25) {
-      stopAutoDemo(true);
-    }
+    if (timer) timer.textContent = `${demoElapsed}s`;
+    if (progress) progress.style.width = `${Math.min(98, (demoElapsed / DEMO_EST_TOTAL) * 100)}%`;
   }, 1000);
 
-  // 1. (วินาทีที่ 0-5): ไฮไลต์กรอบที่การ์ด KPI ด้านบน
+  // Start Step 1 -> chained automatically by Thai voiceover completion
   runDemoStep1();
-
-  // 2. (วินาทีที่ 6-12): เลื่อนหน้าจอลงมาที่ส่วน Filter และเปลี่ยนค่า 'โซนจอดรถ' เป็น โซน A อัตโนมัติ
-  demoStepTimeouts.push(setTimeout(() => {
-    if (!isDemoRunning) return;
-    runDemoStep2();
-  }, 6000));
-
-  // 3. (วินาทีที่ 13-20): เลื่อนลงไปที่กราฟช่วงเวลาเร่งด่วน และแสดง Tooltip ของช่วงเวลาพีค
-  demoStepTimeouts.push(setTimeout(() => {
-    if (!isDemoRunning) return;
-    runDemoStep3();
-  }, 13000));
-
-  // 4. (วินาทีที่ 21-25): กดเปิดหน้าต่าง Export รายงาน
-  demoStepTimeouts.push(setTimeout(() => {
-    if (!isDemoRunning) return;
-    runDemoStep4();
-  }, 21000));
 }
 
 function runDemoStep1() {
+  if (!isDemoRunning) return;
   clearHighlights();
   closeExportModal();
   switchTab('tab1', document.querySelectorAll('.tab-btn')[0]);
@@ -1346,10 +1371,12 @@ function runDemoStep1() {
     kpi.scrollIntoView({ behavior: 'smooth', block: 'center' });
     kpi.querySelectorAll('.kpi-card').forEach(card => card.classList.add('demo-highlight'));
   }
-  updateDemoBanner(1, 'ขั้นตอนที่ 1/4 (วินาที 0–5)', '1. ไฮไลต์การ์ดสรุป KPI ด้านบน', 'สรุปภาพรวมจำนวนรถเข้าทั้งหมด เฉลี่ยต่อวัน สัดส่วน และเวลาจอดเฉลี่ย', 1);
+  updateDemoBanner(1, 'ขั้นตอนที่ 1/4', '1. ไฮไลต์การ์ดสรุป KPI ด้านบน', '🔊 "เริ่มต้นที่ภาพรวมด้านบนครับ การ์ด KPI ทั้ง 5 ใบ สรุปยอดรถเข้า เฉลี่ยต่อวัน สัดส่วนรายวันและรายเดือน รวมถึงเวลาจอดเฉลี่ยไว้ครบถ้วนครับ"');
+  playStepVoice('./audio/demo_step1.mp3', 6000, runDemoStep2);
 }
 
 function runDemoStep2() {
+  if (!isDemoRunning) return;
   clearHighlights();
   closeExportModal();
 
@@ -1362,15 +1389,18 @@ function runDemoStep2() {
     lotSelect.value = 'ลาน 2'; // โซน A / ลาน 2
     renderAll();
   }
-  updateDemoBanner(2, 'ขั้นตอนที่ 2/4 (วินาที 6–12)', '2. ปรับตัวกรองเป็น โซน A (ลาน 2)', 'เลื่อนลงมาที่ Filter และเปลี่ยนค่าโซนจอดรถเป็น โซน A อัตโนมัติ (ระบบคำนวณใหม่ทันที)', 6);
+  updateDemoBanner(2, 'ขั้นตอนที่ 2/4', '2. ปรับตัวกรองเป็น โซน A (ลาน 2)', '🔊 "ถัดมาเลื่อนลงมาที่แถบตัวกรองครับ ระบบจะเปลี่ยนโซนจอดรถเป็น โซน A หรือลาน 2 ให้อัตโนมัติ ตัวเลขและกราฟทั้งหมดจะอัปเดตทันทีครับ"');
+  playStepVoice('./audio/demo_step2.mp3', 7000, runDemoStep3);
 }
 
 function runDemoStep3() {
+  if (!isDemoRunning) return;
   clearHighlights();
   closeExportModal();
   switchTab('tab3', document.querySelectorAll('.tab-btn')[2]);
 
-  setTimeout(() => {
+  const t = setTimeout(() => {
+    if (!isDemoRunning) return;
     const chartCanvas = document.getElementById('cHrEntries');
     if (chartCanvas) {
       const card = chartCanvas.closest('.card');
@@ -1378,11 +1408,9 @@ function runDemoStep3() {
         card.scrollIntoView({ behavior: 'smooth', block: 'center' });
         card.classList.add('demo-highlight');
       }
-
-      // Trigger Tooltip on Peak Hour in cHrEntries
       const c = charts['cHrEntries'];
       if (c && c.data && c.data.datasets && c.data.datasets.length) {
-        let maxVal = -1, peakIdx = 7; // default 07:00
+        let maxVal = -1, peakIdx = 7;
         c.data.datasets.forEach(ds => {
           ds.data.forEach((val, idx) => {
             if (val > maxVal) { maxVal = val; peakIdx = idx; }
@@ -1390,28 +1418,33 @@ function runDemoStep3() {
         });
         const activeEls = c.data.datasets.map((_, dsIdx) => ({ datasetIndex: dsIdx, index: peakIdx }));
         c.setActiveElements(activeEls);
-        if (c.tooltip) {
-          c.tooltip.setActiveElements(activeEls, { x: 0, y: 0 });
-        }
+        if (c.tooltip) c.tooltip.setActiveElements(activeEls, { x: 0, y: 0 });
         c.update();
       }
     }
   }, 400);
+  demoStepTimeouts.push(t);
 
-  updateDemoBanner(3, 'ขั้นตอนที่ 3/4 (วินาที 13–20)', '3. วิเคราะห์กราฟช่วงเวลาเร่งด่วน 24 ชม.', 'แสดง Tooltip อัตโนมัติที่ชั่วโมงพีคสูงสุด (07:00–09:00 น.) เพื่อวางแผนกะกำลังพล', 13);
+  updateDemoBanner(3, 'ขั้นตอนที่ 3/4', '3. วิเคราะห์กราฟช่วงเวลาเร่งด่วน 24 ชม.', '🔊 "ต่อมาที่กราฟช่วงเวลาเร่งด่วน 24 ชั่วโมงครับ ระบบจะเปิด Tooltip ชี้จุดพีคสูงสุดช่วงเช้า เพื่อใช้วางแผนจัดกะ รปภ. ได้อย่างตรงจุดครับ"');
+  playStepVoice('./audio/demo_step3.mp3', 8000, runDemoStep4);
 }
 
 function runDemoStep4() {
+  if (!isDemoRunning) return;
   clearHighlights();
   openExportModal();
   const modal = document.querySelector('.modal-card');
   if (modal) modal.classList.add('demo-highlight');
 
-  updateDemoBanner(4, 'ขั้นตอนที่ 4/4 (วินาที 21–25)', '4. เปิดหน้าต่าง Export รายงาน', 'เปิดหน้าต่างตัวเลือกส่งออกข้อมูลรายวัน (CSV), สถิติเวลาจอด หรือบันทึกภาพกราฟ', 21);
+  updateDemoBanner(4, 'ขั้นตอนที่ 4/4', '4. เปิดหน้าต่าง Export รายงาน', '🔊 "สุดท้าย กดเปิดหน้าต่าง Export รายงานครับ สามารถดาวน์โหลดไฟล์ CSV หรือบันทึกรูปกราฟไปทำสไลด์นำเสนอได้ทันทีครับ"');
+  playStepVoice('./audio/demo_step4.mp3', 5000, () => stopAutoDemo(true));
 }
 
 function stopAutoDemo(finished = false) {
   isDemoRunning = false;
+  demoAudio.pause();
+  demoAudio.onended = null;
+  demoAudio.onerror = null;
   if (demoTimerInterval) { clearInterval(demoTimerInterval); demoTimerInterval = null; }
   demoStepTimeouts.forEach(t => clearTimeout(t));
   demoStepTimeouts = [];
@@ -1427,7 +1460,9 @@ function stopAutoDemo(finished = false) {
   const banner = document.getElementById('demoBanner');
   if (banner) {
     if (finished) {
-      updateDemoBanner(4, '✅ สำเร็จ', 'โหมดสาธิตอัตโนมัติเสร็จสมบูรณ์', 'ท่านสามารถเลือกดาวน์โหลดรายงานหรือคลิกใช้งานแดชบอร์ดต่อได้ทันทีครับ', 25);
+      const progress = document.getElementById('demoProgress');
+      if (progress) progress.style.width = '100%';
+      updateDemoBanner(4, '✅ สำเร็จ', 'โหมดสาธิตอัตโนมัติเสร็จสมบูรณ์', 'ท่านสามารถเลือกดาวน์โหลดรายงานหรือคลิกใช้งานแดชบอร์ดต่อได้ทันทีครับ');
       setTimeout(() => {
         if (!isDemoRunning && banner) banner.style.display = 'none';
       }, 4500);
